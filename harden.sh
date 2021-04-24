@@ -109,18 +109,29 @@ check_shadow_password () {
 
 # -------------------- APT functions -------------------- 
 autoupdate () {
+    # Files necessary:
+    #   NONE
     sudo apt install unattended-upgrades
 }
 
 update () {
+    # Files necessary:
+    #   NONE
+
     sudo apt update && sudo apt upgrade
 }
 
 enumerate_packages () {
+    # Files necessary:
+    #   NONE
+
     apt list --installed
 }
 
 remove_malware () {
+    # Files necessary:
+    #   NONE
+
     declare -a arr=(john, abc, sqlmap, aria2
                     aquisition, bitcomet, bitlet, bitspirit
                     endless-sky, zenmap, minetest, minetest-server
@@ -151,7 +162,6 @@ remove_malware () {
         sudo apt purge -y --force-yes $i
     done
 }
-
 
 # -------------------- Main functions -------------------- 
 main_users () {

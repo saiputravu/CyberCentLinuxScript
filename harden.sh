@@ -1,4 +1,26 @@
 #!/bin/bash
+
+# Foreground Colours
+BLACK=$(tput setaf 0)
+RED=$(tput setaf 1)
+GREEN=$(tput setaf 2)
+YELLOW=$(tput setaf 3)
+BLUE=$(tput setaf 4)
+MAGENTA=$(tput setaf 5)
+CYAN=$(tput setaf 6)
+LIGHTGREY=$(tput setaf 7)
+WHITE=$(tput setaf 8)
+
+UNDERLINE=$(tput smul)
+ENDUNDERLINE=$(tput rmul)
+BOLD=$(tput smso)
+ENDBOLD=$(tput rmso)
+
+CLEARSCREEN=$(tput clear)
+
+# Resets everything
+RESET=$(tput sgr 0)
+
 delete_unauthorised_users () {
     # Files necessary: 
     #   * users.txt
@@ -10,7 +32,7 @@ delete_unauthorised_users () {
 
     for user in $INVALID
     do 
-        userdel -r $user
+        sudo userdel -r $user
     done
     rm accusers.txt
 }
@@ -29,6 +51,17 @@ delete_unauthorised_sudoers () {
     done
 
     rm accsudoers.txt
+}
+
+add_new_users () {
+    # Files necessary:
+    #   NONE
+
+    echo -n "${CLEARSCREEN}"
+    echo "${RED}${BOLD}Type 'exit' to stop.${RESET}"
+    while read -r -p "Username to create: " && [[ $REPLY != exit ]]; do 
+        sudo useradd $REPLY
+    done
 }
 
 autoupdate () {

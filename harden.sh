@@ -419,4 +419,4 @@ main () {
     main_pam
     main_networking
 }
-main_networking
+main

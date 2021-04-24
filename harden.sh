@@ -184,6 +184,7 @@ remove_malware () {
     # Files necessary:
     #   NONE
 
+    echo "${RED}Please make sure you are 100% sure that there is no critcial services in this before running!!${RESET}"
     declare -a arr=(john, abc, sqlmap, aria2
                     aquisition, bitcomet, bitlet, bitspirit
                     endless-sky, zenmap, minetest, minetest-server
@@ -213,6 +214,115 @@ remove_malware () {
     do
         sudo apt purge -y --force-yes $i
     done
+}
+
+# -------------------- Networking functions -------------------- 
+networking_sysctl_config () {
+    # Add a new local sysctl config file for the networking section
+    sudo touch /etc/sysctl.d/cybercent-networking.conf
+
+    # Add each config listed below 
+
+    # IPv4 TIME-WAIT assassination protection
+    echo net.ipv4.tcp_rfc1337=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+
+    # IP Spoofing protection, Source route verification  
+    # Scored
+    echo net.ipv4.conf.all.rp_filter=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.conf.default.rp_filter=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+
+    # Ignore ICMP broadcast requests
+    echo net.ipv4.icmp_echo_ignore_broadcasts=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+
+    # Ignore Directed pings
+    echo net.ipv4.icmp_echo_ignore_all=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+
+    # Log Martians
+    echo net.ipv4.conf.all.log_martians=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.icmp_ignore_bogus_error_responses=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+
+    # Disable source packet routing
+    echo net.ipv4.conf.all.accept_source_route=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.conf.default.accept_source_route=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv6.conf.all.accept_source_route=0  | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv6.conf.default.accept_source_route=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+
+    # Block SYN attacks
+    echo net.ipv4.tcp_syncookies=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.tcp_max_syn_backlog=2048 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.tcp_synack_retries=2 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.tcp_syn_retries=4 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf # Try values 1-5
+
+
+    # Ignore ICMP redirects
+    echo net.ipv4.conf.all.send_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.conf.default.send_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.conf.all.accept_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.conf.default.accept_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.conf.all.secure_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.conf.default.secure_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+
+    echo net.ipv6.conf.all.send_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf # ignore ?
+    echo net.ipv6.conf.default.send_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf # ignore ?
+    echo net.ipv6.conf.all.accept_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv6.conf.default.accept_redirects=0  | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv6.conf.all.secure_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf # ignore ?
+    echo net.ipv6.conf.default.secure_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf # ignore ?
+
+    # Note disabling ipv6 means you dont need the majority of the ipv6 settings
+
+    # General options
+    echo net.ipv6.conf.default.router_solicitations=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv6.conf.default.accept_ra_rtr_pref=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv6.conf.default.accept_ra_pinfo=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv6.conf.default.accept_ra_defrtr=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv6.conf.default.autoconf=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv6.conf.default.dad_transmits=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv6.conf.default.max_addresses=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv6.conf.all.disable_ipv6=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv6.conf.lo.disable_ipv6=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+
+
+    # Reload the configs 
+    # sudo sysctl -p /etc/sysctl.d/cybercent.conf
+    sudo sysctl --system
+}
+
+firewall_setup () {
+    # UFW Firewall setup
+    # Since idk critical services, I didnt do these commands 
+    #   * sudo ufw default deny incoming
+    #   * sudo ufw default allow outgoing
+    #   * sudo ufw allow <PORT>  (this is for each critical service) 
+
+    sudo apt install -y ufw
+    sudo ufw enable 
+    sudo ufw status numbered
+}
+
+monitor_ports () { 
+    # Pipes open tcp and udp ports into a less window
+    sudo netstat -peltu | column -t | less
+}
+
+main_networking () {
+    echo "${GREEN}[*] Configuring networking with sysctl ...${RESET}"
+    networking_sysctl_config
+
+    echo "${GREEN}[*] Installing and enabling UFW...${RESET}"
+    firewall_setup
+
+    local answer=""
+    echo -n "${CYAN}See enumeration of local ports [${GREEN}y${CYAN}|${RED}N${CYAN}] : ${RESET}"
+    read -rp "" answer
+    case $answer in 
+        y|Y)
+            echo 
+            monitor_ports 
+            ;;
+        n|N)
+            ;; # Do nothing
+    esac
 }
 
 # -------------------- Main functions -------------------- 
@@ -307,5 +417,6 @@ main () {
 
     main_users
     main_pam
+    main_networking
 }
-main
+main_networking

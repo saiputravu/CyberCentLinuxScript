@@ -1,4 +1,35 @@
 #!/bin/bash
+delete_unauthorised_users () {
+    # Files necessary: 
+    #   * users.txt
+
+    USERS=$(grep -E "/bin/.*sh" /etc/passwd | grep -v -e root -e `whoami`| cut -d":" -f1)
+    
+    echo -e $USERS | sed "s/ /\\n/g" > accusers.txt
+    INVALID=$(diff -n --suppress-common-lines users.txt accusers.txt | cut -d" " -f5-)
+
+    for user in $INVALID
+    do 
+        userdel -r $user
+    done
+    rm accusers.txt
+}
+
+delete_unauthorised_sudoers () {
+    # Files necessary: 
+    #   * sudoers.txt
+
+    SUDOERS=$(grep "sudo" /etc/group | cut -d":" -f4 | sed "s/,/ /g") 
+
+    echo -e $SUDOERS | sed "s/ /\\n/g" > accsudoers.txt
+    INVALID=$(diff -n --suppress-common-lines sudoers.txt accsudoers.txt | cut -d" " -f5-)
+    for sudoer in $INVALID
+    do 
+        sudo gpasswd -d $sudoer sudo
+    done
+
+    rm accsudoers.txt
+}
 
 autoupdate () {
     sudo apt install unattended-upgrades

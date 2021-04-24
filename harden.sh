@@ -107,11 +107,63 @@ check_shadow_password () {
     done
 }
 
+# -------------------- User Policies functions -------------------- 
+
+user_policies_install () {
+    # Installs required packages for user policies hardening 
+
+    sudo apt install --force-yes -y libpam-cracklib fail2ban
+}
+
+password_policies () {
+    # common-password
+    # Assumes you have run user_policies_install
+
+    # Back the file up to correct directory
+    cp /etc/pam.d/common-password backup/pam/common-password
+
+    # sed -i is inplace so updates file, else prints to stdout
+    sudo sed -ie "s/pam_cracklib\.so.*/pam_cracklib.so retry=3 minlen=8 difok=3 dcredit=-1 ucredit=-1 lcredit=-1 ocredit=-1/" /etc/pam.d/common-password
+    sudo sed -ie "s/pam_unix\.so.*/pam_unix.so obscure use_authtok try_first_pass sha512 minlen=8 remember=5/" /etc/pam.d/common-password
+}
+
+login_policies () {
+    # /etc/logins.def
+    
+    # Back the file up 
+    cp /etc/login.defs backup/pam/common-password
+
+    # Replace the arguments
+    sudo sed -ie "s/PASS_MAX_DAYS.*/PASS_MAX_DAYS\\t90/" /etc/login.defs
+    sudo sed -ie "s/PASS_MIN_DAYS.*/PASS_MIN_DAYS\\t10/" /etc/login.defs
+    sudo sed -ie "s/PASS_WARN_AGE.*/PASS_WARN_AGE\\t7/" /etc/login.defs
+    sudo sed -ie "s/FAILLOG_ENAB.*/FAILLOG_ENAB\\tyes/" /etc/login.defs
+    sudo sed -ie "s/LOG_UNKFAIL_ENAB.*/LOG_UNKFAIL_ENAB\\tyes/" /etc/login.defs
+    sudo sed -ie "s/LOG_OK_LOGINS.*/LOG_OK_LOGINS\\tyes/" /etc/login.defs
+    sudo sed -ie "s/SYSLOG_SU_ENAB.*/SYSLOG_SU_ENAB\\tyes/" /etc/login.defs
+    sudo sed -ie "s/SYSLOG_SG_ENAB.*/SYSLOG_SG_ENAB\\tyes/" /etc/login.defs
+    sudo sed -ie "s/LOGIN_RETRIES.*/LOGIN_RETRIES\\t5/" /etc/login.defs
+    sudo sed -ie "s/ENCRYPT_METHOD.*/ENCRYPT_METHOD\\tSHA512/" /etc/login.defs
+    sudo sed -ie "s/LOGIN_TIMEOUT.*/LOGIN_TIMEOUT\\t60/" /etc/login.defs
+}
+
+account_policies () {
+    # common-auth
+    # Assumes you have ran user_policies_install
+    
+    RANBEFORE=$(grep "pam_tally2.so" /etc/pam.d/common-auth)
+    if [[ -z $RANBEFORE ]]
+    then 
+        echo "auth required pam_tally2.so deny=5 onerr=fail unlock_time=1800 audit even_deny_root silent" | sudo tee -a /etc/pam.d/common-auth > /dev/null
+    fi
+}
+
+
 # -------------------- APT functions -------------------- 
 autoupdate () {
     # Files necessary:
     #   NONE
-    sudo apt install unattended-upgrades
+    sudo apt install unattended-upgrades apt-listchanges
 }
 
 update () {
@@ -227,8 +279,33 @@ main_users () {
     # check_shadow_password
 }
 
+main_pam () {
+    echo "${GREEN}[*] Installing libpam-cracklib and fail2ban ...${RESET}"
+    user_policies_install
+
+    echo "${GREEN}[*] Editing password policies | common-password ...${RESET}"
+    password_policies
+
+    echo "${GREEN}[*] Editing login policies | login.defs ...${RESET}"
+    login_policies
+
+    echo "${GREEN}[*] Editing account policies | common-auth ...${RESET}"
+    account_policies
+}
+
 # Function to run everything
 main () {
+    # Make the backup directories
+    mkdir -p backup/users
+    mkdir -p backup/pam
+    mkdir -p backup/apt
+    mkdir -p backup/services
+    mkdir -p backup/networking
+    mkdir -p backup/system
+    mkdir -p backup/malware
+    mkdir -p backup/misc
+
     main_users
+    main_pam
 }
 main

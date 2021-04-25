@@ -24,6 +24,8 @@ RESET=$(tput sgr 0)
 # Global variables
 USERS=$(grep -E "/bin/.*sh" /etc/passwd | grep -v -e root -e `whoami` -e speech-dispatcher | cut -d":" -f1)
 
+DISTRO=$(lsb_release -i | cut -d: -f2 | sed "s/\\t//g")
+CODENAME=$(lsb_release -c | cut -d: -f2 | sed "s/\\t//g")
 
 # -------------------- User functions -------------------- 
 delete_unauthorised_users () {
@@ -107,6 +109,34 @@ check_shadow_password () {
     done
 }
 
+disable_guests () {
+    # Makes the self-added configs directory
+    # Adds a new local config
+
+    sudo mkdir -p /etc/lightdm/lightdm.conf.d
+    sudo touch /etc/lightdm/lightdm.conf.d/myconfig.conf
+
+    echo "[SeatDefaults]"                   | sudo tee /etc/lightdm/lightdm.conf.d/myconfig.conf > /dev/null
+    echo "autologin-user=`whoami`"          | sudo tee -a /etc/lightdm/lightdm.conf.d/myconfig.conf > /dev/null
+    echo "allow-guest=false"                | sudo tee -a /etc/lightdm/lightdm.conf.d/myconfig.conf > /dev/null
+    echo "greeter-hide-users=true"          | sudo tee -a /etc/lightdm/lightdm.conf.d/myconfig.conf > /dev/null
+    echo "greeter-show-manual-login=true"   | sudo tee -a /etc/lightdm/lightdm.conf.d/myconfig.conf > /dev/null
+    echo "greeter-allow-guest=false"        | sudo tee -a /etc/lightdm/lightdm.conf.d/myconfig.conf > /dev/null
+    echo "autologin-guest=false"            | sudo tee -a /etc/lightdm/lightdm.conf.d/myconfig.conf > /dev/null
+    echo "AutomaticLoginEnable=false"       | sudo tee -a /etc/lightdm/lightdm.conf.d/myconfig.conf > /dev/null
+    echo "xserver-allow-tcp=false"          | sudo tee -a /etc/lightdm/lightdm.conf.d/myconfig.conf > /dev/null
+    
+    sudo lightdm --test-mode --debug 2> backup/users/lightdm_setup.log
+    CONFIGSET=$(grep myconfig.conf backup/users/lightdm_setup.log)  
+    if [[ -z CONFIGSET ]] 
+    then 
+        echo "${RED}LightDM config not set, please check manually.${RESET}"
+        read -pr "Press <enter> to continue"
+    fi
+
+    sudo service lightdm restart
+}
+
 # -------------------- User Policies functions -------------------- 
 
 user_policies_install () {
@@ -160,24 +190,91 @@ account_policies () {
 
 
 # -------------------- APT functions -------------------- 
-autoupdate () {
+enable_autoupdate () {
     # Files necessary:
     #   NONE
-    sudo apt install unattended-upgrades apt-listchanges
+    sudo apt install -y unattended-upgrades apt-listchanges
+    
+	# Set automatic updates
+	echo 'APT::Periodic::Update-Package-Lists "1";'             | sudo tee /etc/apt/apt.conf.d/10periodic > /dev/null
+	echo 'APT::Periodic::Download-Upgradeable-Packages "1";'    | sudo tee -a /etc/apt/apt.conf.d/10periodic > /dev/null
+	echo 'APT::Periodic::Unattended-Upgrade "1";'               | sudo tee -a /etc/apt/apt.conf.d/10periodic > /dev/null
+	echo 'APT::Periodic::AutocleanInterval "7";'                | sudo tee -a /etc/apt/apt.conf.d/10periodic > /dev/null
+
+	echo 'APT::Periodic::Update-Package-Lists "1";'             | sudo tee /etc/apt/apt.conf.d/20auto-upgrades > /dev/null
+	echo 'APT::Periodic::Download-Upgradeable-Packages "1";'    | sudo tee -a /etc/apt/apt.conf.d/20auto-upgrades > /dev/null
+	echo 'APT::Periodic::Unattended-Upgrade "1";'               | sudo tee -a /etc/apt/apt.conf.d/20auto-upgrades > /dev/null
+	echo 'APT::Periodic::AutocleanInterval "7";'                | sudo tee -a /etc/apt/apt.conf.d/20auto-upgrades > /dev/null
+}
+
+fix_sources_list () { 
+    local ubuntu_sources="
+deb http://us.archive.ubuntu.com/ubuntu/ CHANGEME main restricted\n
+deb http://us.archive.ubuntu.com/ubuntu/ CHANGEME-updates main restricted\n
+deb http://us.archive.ubuntu.com/ubuntu/ CHANGEME universe\n
+deb http://us.archive.ubuntu.com/ubuntu/ CHANGEME-updates universe\n
+deb http://us.archive.ubuntu.com/ubuntu/ CHANGEME multiverse\n
+deb http://us.archive.ubuntu.com/ubuntu/ CHANGEME-updates multiverse\n
+deb http://us.archive.ubuntu.com/ubuntu/ CHANGEME-backports main restricted universe multiverse\n
+deb http://security.ubuntu.com/ubuntu CHANGEME-security main restricted\n
+deb http://security.ubuntu.com/ubuntu CHANGEME-security universe\n
+deb http://security.ubuntu.com/ubuntu CHANGEME-security multiverse\n
+
+deb-src http://us.archive.ubuntu.com/ubuntu/ CHANGEME main restricted\n
+deb-src http://us.archive.ubuntu.com/ubuntu/ CHANGEME-updates main restricted\n
+deb-src http://us.archive.ubuntu.com/ubuntu/ CHANGEME universe\n
+deb-src http://us.archive.ubuntu.com/ubuntu/ CHANGEME-updates universe\n
+deb-src http://us.archive.ubuntu.com/ubuntu/ CHANGEME multiverse\n
+deb-src http://us.archive.ubuntu.com/ubuntu/ CHANGEME-updates multiverse\n
+deb-src http://us.archive.ubuntu.com/ubuntu/ CHANGEME-backports main restricted universe multiverse\n
+deb-src http://security.ubuntu.com/ubuntu CHANGEME-security main restricted\n
+deb-src http://security.ubuntu.com/ubuntu CHANGEME-security universe\n
+deb-src http://security.ubuntu.com/ubuntu CHANGEME-security multiverse\n
+"
+
+    local debian_sources="
+deb http://deb.debian.org/debian CHANGEME main\n
+deb-src http://deb.debian.org/debian CHANGEME main\n
+deb http://deb.debian.org/debian-security/ CHANGEME/updates main\n
+deb-src http://deb.debian.org/debian-security/ CHANGEME/updates main\n
+deb http://deb.debian.org/debian CHANGEME-updates main\n
+deb-src http://deb.debian.org/debian CHANGEME-updates main\n
+"
+
+    sudo cp -r /etc/apt/sources.list* backup/apt/ 
+    sudo rm -f /etc/apt/sources.list 
+    case $DISTRO in 
+        Debian)
+            echo -e $debian_sources | sed "s/ deb/deb/g; s/CHANGEME/${CODENAME}/g" | sudo tee /etc/apt/sources.list > /dev/null
+            ;;
+        Ubuntu)
+            echo -e $ubuntu_sources | sed "s/ deb/deb/g; s/CHANGEME/${CODENAME}/g" | sudo tee /etc/apt/sources.list > /dev/null
+            ;;
+        *)  
+            sudo cp backup/apt/sources.list /etc/apt/sources.list
+            echo -e "${RED}${BOLD}Distro not recognised!\nExiting#${RESET}"
+            exit 1
+            ;;
+
+    esac
 }
 
 update () {
     # Files necessary:
     #   NONE
-
-    sudo apt update && sudo apt upgrade
+    sudo apt update && sudo apt upgrade -y
 }
 
 enumerate_packages () {
     # Files necessary:
     #   NONE
 
-    apt list --installed
+    sudo apt list --installed > backup/apt/apt_list_installed_packages.log
+    sudo dpkg -l > backup/apt/dpkg_installed_packages.log # more useful
+
+    # Manually installed
+    sudo apt-mark showmanual > backup/apt/manually_installed_packages.log
+
 }
 
 remove_malware () {
@@ -226,16 +323,18 @@ anti_malware_software () {
 run_antimalware () {
     # Files necessary:
     #   NONE
-    chkrootkit -q
+    
+    # TODO write output to backup dir
+    sudo chkrootkit -q
 
-    rkhunter --update
-    rkhunter --propupd
-    rkhunter -c --enable all --disable none
+    sudo rkhunter --update
+    sudo rkhunter --propupd
+    sudo rkhunter -c --enable all --disable none
 
-    systemctl stop clamav-freshclam
-    freshclam --stdout
-    systemctl start clamav-freshclam
-    clamscan -r -i --stdout --exclude-dir="^/sys"
+    sudo systemctl stop clamav-freshclam
+    sudo freshclam --stdout
+    sudo systemctl start clamav-freshclam
+    sudo clamscan -r -i --stdout --exclude-dir="^/sys"
 }
 
 # -------------------- Networking functions -------------------- 
@@ -246,68 +345,71 @@ networking_sysctl_config () {
     # Add each config listed below 
 
     # IPv4 TIME-WAIT assassination protection
-    echo net.ipv4.tcp_rfc1337=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.tcp_rfc1337=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
 
     # IP Spoofing protection, Source route verification  
     # Scored
-    echo net.ipv4.conf.all.rp_filter=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv4.conf.default.rp_filter=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.conf.all.rp_filter=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.default.rp_filter=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
 
     # Ignore ICMP broadcast requests
-    echo net.ipv4.icmp_echo_ignore_broadcasts=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.icmp_echo_ignore_broadcasts=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
 
     # Ignore Directed pings
-    echo net.ipv4.icmp_echo_ignore_all=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.icmp_echo_ignore_all=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
 
     # Log Martians
-    echo net.ipv4.conf.all.log_martians=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv4.icmp_ignore_bogus_error_responses=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.conf.all.log_martians=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.icmp_ignore_bogus_error_responses=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
 
     # Disable source packet routing
-    echo net.ipv4.conf.all.accept_source_route=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv4.conf.default.accept_source_route=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv6.conf.all.accept_source_route=0  | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv6.conf.default.accept_source_route=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.conf.all.accept_source_route=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.default.accept_source_route=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.all.accept_source_route=0  | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.default.accept_source_route=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
 
     # Block SYN attacks
-    echo net.ipv4.tcp_syncookies=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv4.tcp_max_syn_backlog=2048 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv4.tcp_synack_retries=2 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv4.tcp_syn_retries=4 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf # Try values 1-5
+    echo net.ipv4.tcp_syncookies=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.tcp_max_syn_backlog=2048 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.tcp_synack_retries=2 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.tcp_syn_retries=4 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null # Try values 1-5
 
 
     # Ignore ICMP redirects
-    echo net.ipv4.conf.all.send_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv4.conf.default.send_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv4.conf.all.accept_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv4.conf.default.accept_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv4.conf.all.secure_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv4.conf.default.secure_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
+    echo net.ipv4.conf.all.send_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.default.send_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.all.accept_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.default.accept_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.all.secure_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.default.secure_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
 
-    echo net.ipv6.conf.all.send_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf # ignore ?
-    echo net.ipv6.conf.default.send_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf # ignore ?
-    echo net.ipv6.conf.all.accept_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv6.conf.default.accept_redirects=0  | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv6.conf.all.secure_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf # ignore ?
-    echo net.ipv6.conf.default.secure_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf # ignore ?
+    echo net.ipv6.conf.all.send_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null # ignore ?
+    echo net.ipv6.conf.default.send_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null # ignore ?
+    echo net.ipv6.conf.all.accept_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.default.accept_redirects=0  | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.all.secure_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null # ignore ?
+    echo net.ipv6.conf.default.secure_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null # ignore ?
 
     # Note disabling ipv6 means you dont need the majority of the ipv6 settings
 
     # General options
-    echo net.ipv6.conf.default.router_solicitations=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv6.conf.default.accept_ra_rtr_pref=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv6.conf.default.accept_ra_pinfo=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv6.conf.default.accept_ra_defrtr=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv6.conf.default.autoconf=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv6.conf.default.dad_transmits=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv6.conf.default.max_addresses=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv6.conf.all.disable_ipv6=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-    echo net.ipv6.conf.lo.disable_ipv6=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf
-
+    echo net.ipv6.conf.default.router_solicitations=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.default.accept_ra_rtr_pref=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.default.accept_ra_pinfo=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.default.accept_ra_defrtr=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.default.autoconf=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.default.dad_transmits=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.default.max_addresses=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.all.disable_ipv6=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.lo.disable_ipv6=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
 
     # Reload the configs 
     # sudo sysctl -p /etc/sysctl.d/cybercent.conf
     sudo sysctl --system
+
+	# Disable IPV6
+	sudo sed -i '/^IPV6=yes/ c\IPV6=no\' /etc/default/ufw
+	echo 'blacklist ipv6' | sudo tee -a /etc/modprobe.d/blacklist > /dev/null
 }
 
 firewall_setup () {
@@ -317,14 +419,81 @@ firewall_setup () {
     #   * sudo ufw default allow outgoing
     #   * sudo ufw allow <PORT>  (this is for each critical service) 
 
+    # Flush/Delete firewall rules
+	sudo iptables -F
+	sudo iptables -X
+	sudo iptables -Z
+
     sudo apt install -y ufw
     sudo ufw enable 
-    sudo ufw status numbered
+    sudo ufw logging full
+	sudo ufw deny 23    #Block Telnet
+	sudo ufw deny 2049  #Block NFS
+	sudo ufw deny 515   #Block printer port
+	sudo ufw deny 111   #Block Sun rpc/NFS
+    sudo ufw status verbose > backup/networking/firewall_ufw.log 
+
+    # Iptables specific
+    # Block null packets (DoS)
+	sudo iptables -A INPUT -p tcp --tcp-flags ALL NONE -j DROP
+
+	# Block syn-flood attacks (DoS)
+	sudo iptables -A INPUT -p tcp ! --syn -m state --state NEW -j DROP
+
+	#Drop incoming packets with fragments
+	sudo iptables -A INPUT -f -j DROP
+
+	# Block XMAS packets (DoS)
+	sudo iptables -A INPUT -p tcp --tcp-flags ALL ALL -j DROP
+
+	# Allow internal traffic on the loopback device
+	sudo iptables -A INPUT -i lo -j ACCEPT
+
+	# Allow ssh access
+	# sudo iptables -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+
+	# Allow established connections
+	sudo iptables -I INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+	# Allow outgoing connections
+	sudo iptables -P OUTPUT ACCEPT
+
+	# Set default deny firewall policy
+	# sudo iptables -P INPUT DROP
+
+	#Block Telnet
+	sudo iptables -A INPUT -p tcp -s 0/0 -d 0/0 --dport 23 -j DROP
+
+	#Block NFS
+	sudo iptables -A INPUT -p tcp -s 0/0 -d 0/0 --dport 2049 -j DROP
+
+	#Block X-Windows
+	sudo iptables -A INPUT -p tcp -s 0/0 -d 0/0 --dport 6000:6009 -j DROP
+
+	#Block X-Windows font server
+	sudo iptables -A INPUT -p tcp -s 0/0 -d 0/0 --dport 7100 -j DROP
+
+	#Block printer port
+	sudo iptables -A INPUT -p tcp -s 0/0 -d 0/0 --dport 515 -j DROP
+
+	#Block Sun rpc/NFS
+	sudo iptables -A INPUT -p udp -s 0/0 -d 0/0 --dport 111 -j DROP
+
+	 #Deny outside packets from internet which claim to be from your loopback interface.
+	sudo iptables -A INPUT -p all -s localhost  -i eth0 -j DROP
+
+	# Save rules
+	sudo iptables-save > /etc/sudo iptables/rules.v4
+
 }
 
 monitor_ports () { 
     # Pipes open tcp and udp ports into a less window
-    sudo netstat -peltu | column -t | less
+    sudo netstat -peltu | column -t > backup/networking/open_ports.log
+
+    sudo apt install nmap -y
+	sudo nmap -oN backup/networking/nmap.log -p- -v localhost 
+	sudo apt purge nmap -y
 }
 
 main_networking () {
@@ -347,10 +516,36 @@ main_networking () {
     esac
 }
 
-# -------------------- Main functions -------------------- 
-main_users () {
-    echo -n ${CLEARSCREEN}
+# -------------------- Misc functions -------------------- 
 
+chattr_all_config_files () {
+    # Chattr all files that will need to be edited by script
+    find /etc/ -type f -exec chattr -i {} \;
+    find /bin/ -type f -exec chattr -i {} \;
+    find /home/ -type f -exec chattr -i {} \;
+}
+
+# -------------------- Main functions -------------------- 
+
+main_apt () {
+    echo "${GREEN}[*] Reverting sources.list file to default ...${RESET}"
+    fix_sources_list
+    sudo apt update
+
+    echo "${GREEN}[*] Enabling auto updates ...${RESET}"
+    enable_autoupdate
+
+    echo "${GREEN}[*] Uninstalling any packages breaching policies ... ${RESET}"
+    remove_malware
+
+    echo "${GREEN}[*] Updating all packages (this may take a long time) ... ${RESET}"
+    update
+
+    echo "${GREEN}[*] Enumerating packages ${BOLD}saved to backups/apt/${RESET}"
+    enumerate_packages
+}
+
+main_users () {
     local answer=""
     echo -n "${CYAN}Delete unauthorised users [${GREEN}y${CYAN}|${RED}N${CYAN}] : ${RESET}"
     read -rp "" answer
@@ -402,6 +597,9 @@ main_users () {
     echo "${GREEN}[*] Checking for any users with empty passwords ... ${RESET}"
     check_shadow_password
 
+    echo "${GREEN}[*] Lightdm configs ${RESET}"
+    disable_guests
+
     # Order ran 
     # delete_unauthorised_users
     # delete_unauthorised_sudoers
@@ -409,6 +607,7 @@ main_users () {
     # change_users_passwords
     # users_check_uid_0
     # check_shadow_password
+    # disable_guests
 }
 
 main_pam () {
@@ -427,6 +626,9 @@ main_pam () {
 
 # Function to run everything
 main () {
+    echo -n "${CLEARSCREEN}"
+    echo "${GREEN}For best performance, please run this script using ${BOLD}TMUX${RESET}"
+
     # Make the backup directories
     mkdir -p backup/users
     mkdir -p backup/pam
@@ -437,6 +639,11 @@ main () {
     mkdir -p backup/malware
     mkdir -p backup/misc
 
+    # Ensure all config files can be edited
+    chattr_all_config_files
+
+    # Each main section
+    main_apt
     main_users
     main_pam
     main_networking

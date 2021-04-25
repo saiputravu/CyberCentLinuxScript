@@ -119,3 +119,24 @@ remove_malware () {
     done
 }
 
+anti_malware_software () {
+    # Files necessary:
+    #   NONE
+    sudo apt install -y clamav, rkhunter, chrootkit, lynis 
+}
+
+run_antimalware () {
+    # Files necessary:
+    #   NONE
+    chkrootkit -q
+
+    rkhunter --update
+    rkhunter --propupd
+    rkhunter -c --enable all --disable none
+
+    systemctl stop clamav-freshclam
+    freshclam --stdout
+    systemctl start clamav-freshclam
+    clamscan -r -i --stdout --exclude-dir="^/sys"
+}
+

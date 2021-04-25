@@ -349,8 +349,8 @@ networking_sysctl_config () {
 
     # IP Spoofing protection, Source route verification  
     # Scored
-    echo net.ipv4.conf.all.rp_filter=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv4.conf.default.rp_filter=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.all.rp_filter=1      | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.default.rp_filter=1  | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
 
     # Ignore ICMP broadcast requests
     echo net.ipv4.icmp_echo_ignore_broadcasts=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
@@ -359,49 +359,49 @@ networking_sysctl_config () {
     echo net.ipv4.icmp_echo_ignore_all=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
 
     # Log Martians
-    echo net.ipv4.conf.all.log_martians=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv4.icmp_ignore_bogus_error_responses=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.all.log_martians=1               | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.icmp_ignore_bogus_error_responses=1   | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
 
     # Disable source packet routing
-    echo net.ipv4.conf.all.accept_source_route=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv4.conf.default.accept_source_route=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv6.conf.all.accept_source_route=0  | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv6.conf.default.accept_source_route=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.all.accept_source_route=0        | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.default.accept_source_route=0    | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.all.accept_source_route=0        | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.default.accept_source_route=0    | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
 
     # Block SYN attacks
-    echo net.ipv4.tcp_syncookies=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv4.tcp_max_syn_backlog=2048 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv4.tcp_synack_retries=2 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv4.tcp_syn_retries=4 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null # Try values 1-5
+    echo net.ipv4.tcp_syncookies=1          | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.tcp_max_syn_backlog=2048  | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.tcp_synack_retries=2      | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.tcp_syn_retries=4         | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null # Try values 1-5
 
 
     # Ignore ICMP redirects
-    echo net.ipv4.conf.all.send_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv4.conf.default.send_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv4.conf.all.accept_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv4.conf.default.accept_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv4.conf.all.secure_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv4.conf.default.secure_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.all.send_redirects=0         | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.default.send_redirects=0     | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.all.accept_redirects=0       | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.default.accept_redirects=0   | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.all.secure_redirects=0       | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv4.conf.default.secure_redirects=0   | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
 
-    echo net.ipv6.conf.all.send_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null # ignore ?
-    echo net.ipv6.conf.default.send_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null # ignore ?
-    echo net.ipv6.conf.all.accept_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv6.conf.default.accept_redirects=0  | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv6.conf.all.secure_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null # ignore ?
-    echo net.ipv6.conf.default.secure_redirects=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null # ignore ?
+    echo net.ipv6.conf.all.send_redirects=0         | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null # ignore ?
+    echo net.ipv6.conf.default.send_redirects=0     | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null # ignore ?
+    echo net.ipv6.conf.all.accept_redirects=0       | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.default.accept_redirects=0   | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.all.secure_redirects=0       | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null # ignore ?
+    echo net.ipv6.conf.default.secure_redirects=0   | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null # ignore ?
 
     # Note disabling ipv6 means you dont need the majority of the ipv6 settings
 
     # General options
-    echo net.ipv6.conf.default.router_solicitations=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv6.conf.default.accept_ra_rtr_pref=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv6.conf.default.accept_ra_pinfo=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv6.conf.default.accept_ra_defrtr=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv6.conf.default.autoconf=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv6.conf.default.dad_transmits=0 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv6.conf.default.max_addresses=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv6.conf.all.disable_ipv6=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
-    echo net.ipv6.conf.lo.disable_ipv6=1 | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.default.router_solicitations=0   | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.default.accept_ra_rtr_pref=0     | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.default.accept_ra_pinfo=0        | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.default.accept_ra_defrtr=0       | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.default.autoconf=0               | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.default.dad_transmits=0          | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.default.max_addresses=1          | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.all.disable_ipv6=1               | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
+    echo net.ipv6.conf.lo.disable_ipv6=1                | sudo tee -a /etc/sysctl.d/cybercent-networking.conf > /dev/null
 
     # Reload the configs 
     # sudo sysctl -p /etc/sysctl.d/cybercent.conf
@@ -496,24 +496,102 @@ monitor_ports () {
 	sudo apt purge nmap -y
 }
 
-main_networking () {
-    echo "${GREEN}[*] Configuring networking with sysctl ...${RESET}"
-    networking_sysctl_config
+# -------------------- System functions -------------------- 
+system_sysctl_config() {
 
-    echo "${GREEN}[*] Installing and enabling UFW...${RESET}"
-    firewall_setup
+    # Add a new config file
+    sudo touch /etc/sysctl.d/cybercent-networking.conf
 
-    local answer=""
-    echo -n "${CYAN}See enumeration of local ports [${GREEN}y${CYAN}|${RED}N${CYAN}] : ${RESET}"
-    read -rp "" answer
-    case $answer in 
-        y|Y)
-            echo 
-            monitor_ports 
-            ;;
-        n|N)
-            ;; # Do nothing
-    esac
+    # Add these configs
+    echo kernel.dmesg_restrict=1            | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null # Scored
+    echo fs.suid_dumpable=0                 | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null # Core dumps # Scored
+    echo kernel.msgmnb=65536                | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null
+    echo kernel.msgmax=65536                | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null
+    echo kernel.sysrq=0                     | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null
+    echo kernel.maps_protect=1              | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null
+    echo kernel.core_uses_pid=1             | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null
+    echo kernel.shmmax=68719476736          | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null
+    echo kernel.shmall=4294967296           | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null
+    echo kernel.exec_shield=1               | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null
+    echo kernel.panic=10                    | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null
+    echo kernel.kptr_restrict=2             | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null
+    echo vm.panic_on_oom=1                  | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null
+    echo fs.protected_hardlinks=1           | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null
+    echo fs.protected_symlinks=1            | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null
+    echo kernel.randomize_va_space=2        | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null # Scored ASLR; 2 = full; 1 = semi; 0 = none
+    echo kernel.unprivileged_userns_clone=0 | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null # Scored
+    echo kernel.ctrl-alt-del=0              | sudo tee -a /etc/sysctl.d/cybercent-system.conf > /dev/null # Scored CTRL-ALT-DEL disable
+
+    sudo sysctl --system
+}
+
+disable_ctrl_alt_del () {
+    echo 'exec shutdown -r now "Control-Alt-Delete pressed"' | sudo tee -a /etc/init/control-alt-delete.conf
+    
+	sudo systemctl mask ctrl-alt-del.target
+	sudo systemctl daemon-reload
+}
+
+file_perms () {
+    sudo chown root:root /etc/fstab   # Scored
+    sudo chmod 644 /etc/fstab  		 # Scored
+    sudo chown root:root /etc/group   # Scored
+    sudo chmod 644 /etc/group  		 # Scored
+    sudo chown root:root /etc/shadow  # Scored
+    sudo chmod 400 /etc/shadow  		 # Scored	
+    sudo chown root:root /etc/apache2 # Scored
+    sudo chmod 755 /etc/apache2  	 # Scored
+
+    sudo chmod 0600 /etc/securetty
+    sudo chmod 644 /etc/crontab
+    sudo chmod 640 /etc/ftpusers
+    sudo chmod 440 /etc/inetd.conf
+    sudo chmod 440 /etc/xinetd.conf
+    sudo chmod 400 /etc/inetd.d
+    sudo chmod 644 /etc/hosts.allow
+    sudo chmod 440 /etc/ers
+    sudo chmod 640 /etc/shadow  			# Scored
+    sudo chmod 600 /boot/grub/grub.cfg   # Scored
+    sudo chmod 600 /etc/ssh/sshd_config  # Scored
+    sudo chmod 600 /etc/gshadow-         # Scored
+    sudo chmod 600 /etc/group-           # Scored
+    sudo chmod 600 /etc/passwd-          # Scored
+
+    sudo chown root:root /etc/ssh/sshd_config # Scored
+    sudo chown root:root /etc/passwd-         # Scored
+    sudo chown root:root /etc/group-          # Scored
+    sudo chown root:root /etc/shadow          # Scored
+    sudo chown root:root /etc/securetty
+    sudo chown root:root /boot/grub/grub.cfg  # Scored
+
+    sudo chmod og-rwx /boot/grub/grub.cfg  	# Scored
+    sudo chown root:shadow /etc/shadow-  	
+    sudo chmod o-rwx,g-rw /etc/shadow-  		
+    sudo chown root:shadow /etc/gshadow-  
+    sudo chmod o-rwx,g-rw /etc/gshadow-
+
+    # Idk about this one chief 
+
+    # sudo touch /etc/cron.allow
+    # sudo touch /etc/at.allow
+    # sudo chmod og-rwx /etc/cron.allow
+    # sudo chmod og-rwx /etc/at.allow
+    # sudo chown root:root /etc/cron.allow
+    # sudo chown root:root /etc/at.allow
+    # sudo chown root:root /etc/cron.d
+    # sudo chmod og-rwx /etc/cron.d
+    # sudo chown root:root /etc/crontab
+    # sudo chmod og-rwx /etc/crontab
+    # sudo chmod -R g-wx,o-rwx /var/log/*
+}
+
+set_grub_password () {
+    echo "${GREEN}Setting the GRUB password to" '"CyberPatriot1!"' "make sure to log in as root at startup.${RESET}"
+	#Secures Grub and sets password CyberPatriot1!
+ 	sudo apt install grub-common -y
+    echo "set superusers=\"root\"" | sudo tee -a /etc/grub.d/40_custom
+    echo "password_pbkdf2 root grub.pbkdf2.sha512.10000.80D8ACE911690CBCE96A4B94DB030A138377FA49F6F03EB84DFB388E5D6A9746F8E81B92265CF6535ACEBE0C0B2DF5189E362493A2A9F5395DB87524D94F07D4.CECEB26E93C1FD33EF69D59D71FB7B51562C06385A5466B4138A9687D1248915555DE07495C87A50C75333FC2F3751B99605430241EF4FD30494477B5C2C9D9A" | sudo tee -a /etc/grub.d/40_custom
+    update-grub
 }
 
 # -------------------- Misc functions -------------------- 
@@ -624,6 +702,49 @@ main_pam () {
     account_policies
 }
 
+main_networking () {
+    echo "${GREEN}[*] Configuring networking with sysctl ...${RESET}"
+    networking_sysctl_config
+
+    echo "${GREEN}[*] Installing and enabling UFW...${RESET}"
+    firewall_setup
+
+    local answer=""
+    echo -n "${CYAN}See enumeration of local ports [${GREEN}y${CYAN}|${RED}N${CYAN}] : ${RESET}"
+    read -rp "" answer
+    case $answer in 
+        y|Y)
+            echo 
+            monitor_ports 
+            ;;
+        n|N)
+            ;; # Do nothing
+    esac
+}
+
+main_system () {
+    echo "${GREEN}[*] Configuring system with sysctl ...${RESET}"
+    system_sysctl_config
+
+    echo "${GREEN}[*] Disabling CTRL+ALT+DELETE ...${RESET}"
+    disable_ctrl_alt_del
+
+    echo "${GREEN}[*] Setting correct file permissions for sensitive files ...${RESET}"
+    file_perms
+
+    local answer=""
+    echo -n "${CYAN}Set grub password to" '"CyberPatriot!"' "[${GREEN}y${CYAN}|${RED}N${CYAN}] : ${RESET}"
+    read -rp "" answer
+    case $answer in 
+        y|Y)
+            echo 
+            set_grub_password
+            ;;
+        n|N)
+            ;; # Do nothing
+    esac
+}
+
 # Function to run everything
 main () {
     echo -n "${CLEARSCREEN}"
@@ -647,5 +768,6 @@ main () {
     main_users
     main_pam
     main_networking
+    main_system
 }
 main

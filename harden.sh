@@ -155,6 +155,9 @@ password_policies () {
     # sed -i is inplace so updates file, else prints to stdout
     sudo sed -ie "s/pam_cracklib\.so.*/pam_cracklib.so retry=3 minlen=8 difok=3 dcredit=-1 ucredit=-1 lcredit=-1 ocredit=-1/" /etc/pam.d/common-password
     sudo sed -ie "s/pam_unix\.so.*/pam_unix.so obscure use_authtok try_first_pass sha512 minlen=8 remember=5/" /etc/pam.d/common-password
+
+    # Remove any nullok (no password authentication)
+    sudo sed -i 's/nullok//g' /etc/pam.d/common-password
 }
 
 login_policies () {
@@ -175,6 +178,7 @@ login_policies () {
     sudo sed -ie "s/LOGIN_RETRIES.*/LOGIN_RETRIES\\t5/" /etc/login.defs
     sudo sed -ie "s/ENCRYPT_METHOD.*/ENCRYPT_METHOD\\tSHA512/" /etc/login.defs
     sudo sed -ie "s/LOGIN_TIMEOUT.*/LOGIN_TIMEOUT\\t60/" /etc/login.defs
+    
 }
 
 account_policies () {
@@ -186,6 +190,8 @@ account_policies () {
     then 
         echo "auth required pam_tally2.so deny=5 onerr=fail unlock_time=1800 audit even_deny_root silent" | sudo tee -a /etc/pam.d/common-auth > /dev/null
     fi
+    
+    sudo sed -i 's/nullok//g' /etc/pam.d/common-auth
 }
 
 

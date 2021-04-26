@@ -27,6 +27,8 @@ USERS=$(grep -E "/bin/.*sh" /etc/passwd | grep -v -e root -e `whoami` -e speech-
 DISTRO=$(lsb_release -i | cut -d: -f2 | sed "s/\\t//g")
 CODENAME=$(lsb_release -c | cut -d: -f2 | sed "s/\\t//g")
 
+APT=apt
+
 # -------------------- User functions -------------------- 
 delete_unauthorised_users () {
     # Files necessary: 
@@ -142,7 +144,7 @@ disable_guests () {
 user_policies_install () {
     # Installs required packages for user policies hardening 
 
-    sudo apt install --force-yes -y libpam-cracklib fail2ban
+    sudo $APT install --force-yes -y libpam-cracklib fail2ban
 }
 
 password_policies () {
@@ -199,7 +201,7 @@ account_policies () {
 enable_autoupdate () {
     # Files necessary:
     #   NONE
-    sudo apt install -y unattended-upgrades apt-listchanges
+    sudo $APT install -y unattended-upgrades apt-listchanges
     
     # Set automatic updates
     echo 'APT::Periodic::Update-Package-Lists "1";'             | sudo tee /etc/apt/apt.conf.d/10periodic > /dev/null
@@ -268,7 +270,7 @@ deb-src http://deb.debian.org/debian CHANGEME-updates main\n
 update () {
     # Files necessary:
     #   NONE
-    sudo apt update && sudo apt upgrade -y
+    sudo $APT update && sudo $APT upgrade -y
 }
 
 enumerate_packages () {
@@ -315,7 +317,7 @@ remove_malware () {
 
     for i in "${arr[@]}"
     do
-        sudo apt purge -y --force-yes $i
+        sudo $APT purge -y --force-yes $i
     done
 }
 
@@ -496,11 +498,35 @@ service_pureftpd () {
     sudo service pure-ftpd restart 
 }
 
+service_proftpd () {
+    # Unique config file each time
+    sudo cp /etc/proftpd/proftpd.conf backup/services/proftpd_conf_`date +%s`.bak
+
+    sudo ufw allow ftp 
+    sudo ufw allow 20
+
+    # proftpd.conf
+    echo "Deny Filter \\*.*/"           | sudo tee -a /etc/protpd/proftpd.conf > /dev/null
+    echo "DelayEngine on"               | sudo tee -a /etc/protpd/proftpd.conf > /dev/null
+    echo "UseLastLog on"                | sudo tee -a /etc/protpd/proftpd.conf > /dev/null
+    echo "ServerIdent off"              | sudo tee -a /etc/protpd/proftpd.conf > /dev/null
+    echo "IdentLookups off"             | sudo tee -a /etc/protpd/proftpd.conf > /dev/null
+    echo "TLSEngine on"                 | sudo tee -a /etc/protpd/proftpd.conf > /dev/null
+    echo "TLSProtocol SSLv23"           | sudo tee -a /etc/protpd/proftpd.conf > /dev/null
+    echo "TLSRequired on"               | sudo tee -a /etc/protpd/proftpd.conf > /dev/null
+    echo "UseReverseDNS on"             | sudo tee -a /etc/protpd/proftpd.conf > /dev/null
+    echo "UseIPv6 off"                  | sudo tee -a /etc/protpd/proftpd.conf > /dev/null
+    echo 'AllowFilter "^[a-zA-Z0-9 ,]*$"'| sudo tee -a /etc/protpd/proftpd.conf > /dev/null
+    echo "DeferWelcome on"              | sudo tee -a /etc/protpd/proftpd.conf > /dev/null
+
+    sudo service proftpd restart 
+}
+
 # -------------------- Malware functions --------------------
 anti_malware_software () {
     # Files necessary:
     #   NONE
-    sudo apt install -y clamav, rkhunter, chrootkit, lynis 
+    sudo $APT install -y clamav, rkhunter, chrootkit, lynis 
 }
 
 run_antimalware () {
@@ -607,7 +633,7 @@ firewall_setup () {
     sudo iptables -X
     sudo iptables -Z
 
-    sudo apt install -y ufw
+    sudo $APT install -y ufw
     sudo ufw enable 
     sudo ufw logging full
     sudo ufw deny 23    #Block Telnet
@@ -674,9 +700,9 @@ monitor_ports () {
     # Pipes open tcp and udp ports into a less window
     sudo netstat -peltu | column -t > backup/networking/open_ports.log
 
-    sudo apt install nmap -y
+    sudo $APT install nmap -y
     sudo nmap -oN backup/networking/nmap.log -p- -v localhost 
-    sudo apt purge nmap -y
+    sudo $APT purge nmap -y
 }
 
 # -------------------- System functions -------------------- 
@@ -771,7 +797,7 @@ file_perms () {
 set_grub_password () {
     echo "${GREEN}Setting the GRUB password to" '"CyberPatriot1!"' "make sure to log in as root at startup.${RESET}"
     #Secures Grub and sets password CyberPatriot1!
-    sudo apt install grub-common -y
+    sudo $APT install grub-common -y
     echo "set superusers=\"root\"" | sudo tee -a /etc/grub.d/40_custom
     echo "password_pbkdf2 root grub.pbkdf2.sha512.10000.80D8ACE911690CBCE96A4B94DB030A138377FA49F6F03EB84DFB388E5D6A9746F8E81B92265CF6535ACEBE0C0B2DF5189E362493A2A9F5395DB87524D94F07D4.CECEB26E93C1FD33EF69D59D71FB7B51562C06385A5466B4138A9687D1248915555DE07495C87A50C75333FC2F3751B99605430241EF4FD30494477B5C2C9D9A" | sudo tee -a /etc/grub.d/40_custom
     update-grub
@@ -781,9 +807,9 @@ set_grub_password () {
 
 chattr_all_config_files () {
     # Chattr all files that will need to be edited by script
-    find /etc/ -type f -exec chattr -i {} \;
-    find /bin/ -type f -exec chattr -i {} \;
-    find /home/ -type f -exec chattr -i {} \;
+    sudo find /etc/ -type f -exec chattr -i {} \;
+    sudo find /bin/ -type f -exec chattr -i {} \;
+    sudo find /home/ -type f -exec chattr -i {} \;
 }
 
 # -------------------- Main functions -------------------- 
@@ -791,7 +817,7 @@ chattr_all_config_files () {
 main_apt () {
     echo "${GREEN}[*] Reverting sources.list file to default ...${RESET}"
     fix_sources_list
-    sudo apt update
+    sudo $APT update
 
     echo "${GREEN}[*] Enabling auto updates ...${RESET}"
     enable_autoupdate
@@ -945,6 +971,11 @@ main () {
 
     # Ensure all config files can be edited
     chattr_all_config_files
+
+    # Apt fast install
+    sudo add-apt-repository ppa:apt-fast/stable -y
+    sudo apt-get update
+    sudo DEBIAN_FRONTEND=noninteractive apt install -y apt-fast && APT=apt-fast
 
     # Each main section
     main_apt

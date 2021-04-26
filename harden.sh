@@ -407,6 +407,95 @@ service_samba () {
     sudo service smbd restart 
 }
 
+service_vsftpd () {
+    # Unique config file each time
+    sudo cp /etc/vsftpd/vsftpd.conf backup/services/vsftpd_conf_`date +%s`.bak
+
+    sudo ufw allow ftp 
+    sudo ufw allow 20
+
+    # vsftpd.conf
+
+    # Jail users to home directory (user will need a home dir to exist)
+    echo "chroot_local_user=YES"                        | sudo tee /etc/vsftpd/vsftpd.conf > /dev/null
+    echo "chroot_list_enable=YES"                       | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null
+    echo "chroot_list_file=/etc/vsftpd.chroot_list"     | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null
+    echo "allow_writeable_chroot=YES"                   | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # Only enable if you want files to be editable
+
+    # Allow or deny users
+    echo "userlist_enable=YES"                  | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null
+    echo "userlist_file=/etc/vsftpd.userlist"   | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null
+    echo "userlist_deny=NO"                     | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null
+
+    # General config
+    echo "anonymous_enable=NO"          | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # disable  anonymous login
+    echo "local_enable=YES"             | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # permit local logins
+    echo "write_enable=YES"             | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # enable FTP commands which change the filesystem
+    echo "local_umask=022"              | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # value of umask for file creation for local users
+    echo "dirmessage_enable=YES"        | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # enable showing of messages when users first enter a new directory
+    echo "xferlog_enable=YES"           | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # a log file will be maintained detailing uploads and downloads
+    echo "connect_from_port_20=YES"     | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # use port 20 (ftp-data) on the server machine for PORT style connections
+    echo "xferlog_std_format=YES"       | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # keep standard log file format
+    echo "listen=NO"                    | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # prevent vsftpd from running in standalone mode
+    echo "listen_ipv6=YES"              | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # vsftpd will listen on an IPv6 socket instead of an IPv4 one
+    echo "pam_service_name=vsftpd"      | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # name of the PAM service vsftpd will use
+    echo "userlist_enable=YES"          | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # enable vsftpd to load a list of usernames
+    echo "tcp_wrappers=YES"             | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # turn on tcp wrappers
+
+    echo "ascii_upload_enable=NO"   | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null 
+    echo "ascii_download_enable=NO" | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null 
+
+    sudo service vsftpd restart 
+}
+
+service_pureftpd () {
+
+    sudo cp /etc/pure-ftpd/pure-ftpd.conf backup/services/pure-ftpd_conf_`date +%s`.bak
+    # Unique config file each time
+    sudo ufw allow ftp 
+    sudo ufw allow 20
+
+    # pure-ftpd.conf
+
+    echo "ChrootEveryone yes"           | sudo tee /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "NoAnonymous yes"              | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "AnonymousOnly no"             | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "AnonymousCanCreateDirs no"    | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "AnonymousCantUpload yes"      | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "AllowUserFXP no"              | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "AllowAnonymousFXP no"         | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+
+    echo "DisplayDotFiles yes"          | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "ProhibitDotFilesWrite yes"    | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "ProhibitDotFilesRead no"      | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+
+    echo "DontResolve yes"              | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "VerboseLog yes"               | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "SyslogFacility ftp"           | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "PAMAuthenticate yes"          | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "UnixAuthenticate no"          | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+
+    echo "MaxClientsNumber 50"          | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "LimitRecursion 500 8"         | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "MaxClientsPerIp 3"            | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "MaxIdleTime 10"               | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "MaxLoad 4"                    | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+
+    echo "IPV4Only yes"                 | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "TLS 2"                        | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "Umask 133:022"                | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+
+    echo "Daemonize yes"                | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "NoChmod yes"                  | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    # echo "KeepAllFiles yes"             | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "CreateHomeDir yes"            | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "AutoRename yes"               | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "AntiWarez yes"                | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+    echo "CustomerProof yes"            | sudo tee -a /etc/pure-ftpd/pure-ftpd.conf > /dev/null
+
+    sudo service pure-ftpd restart 
+}
+
 # -------------------- Malware functions --------------------
 anti_malware_software () {
     # Files necessary:

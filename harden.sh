@@ -24,8 +24,8 @@ RESET=$(tput sgr 0)
 # Global variables
 USERS=$(grep -E "/bin/.*sh" /etc/passwd | grep -v -e root -e `whoami` -e speech-dispatcher | cut -d":" -f1)
 
-DISTRO=$(lsb_release -i | cut -d: -f2 | sed "s/\\t//g")
-CODENAME=$(lsb_release -c | cut -d: -f2 | sed "s/\\t//g")
+DISTRO=$(lsb_release -i | cut -d: -f2 | sed "s/\    //g")
+CODENAME=$(lsb_release -c | cut -d: -f2 | sed "s/\    //g")
 
 # -------------------- User functions -------------------- 
 delete_unauthorised_users () {
@@ -167,17 +167,17 @@ login_policies () {
     cp /etc/login.defs backup/pam/common-password
 
     # Replace the arguments
-    sudo sed -ie "s/PASS_MAX_DAYS.*/PASS_MAX_DAYS\\t90/" /etc/login.defs
-    sudo sed -ie "s/PASS_MIN_DAYS.*/PASS_MIN_DAYS\\t10/" /etc/login.defs
-    sudo sed -ie "s/PASS_WARN_AGE.*/PASS_WARN_AGE\\t7/" /etc/login.defs
-    sudo sed -ie "s/FAILLOG_ENAB.*/FAILLOG_ENAB\\tyes/" /etc/login.defs
-    sudo sed -ie "s/LOG_UNKFAIL_ENAB.*/LOG_UNKFAIL_ENAB\\tyes/" /etc/login.defs
-    sudo sed -ie "s/LOG_OK_LOGINS.*/LOG_OK_LOGINS\\tyes/" /etc/login.defs
-    sudo sed -ie "s/SYSLOG_SU_ENAB.*/SYSLOG_SU_ENAB\\tyes/" /etc/login.defs
-    sudo sed -ie "s/SYSLOG_SG_ENAB.*/SYSLOG_SG_ENAB\\tyes/" /etc/login.defs
-    sudo sed -ie "s/LOGIN_RETRIES.*/LOGIN_RETRIES\\t5/" /etc/login.defs
-    sudo sed -ie "s/ENCRYPT_METHOD.*/ENCRYPT_METHOD\\tSHA512/" /etc/login.defs
-    sudo sed -ie "s/LOGIN_TIMEOUT.*/LOGIN_TIMEOUT\\t60/" /etc/login.defs
+    sudo sed -ie "s/PASS_MAX_DAYS.*/PASS_MAX_DAYS\    90/" /etc/login.defs
+    sudo sed -ie "s/PASS_MIN_DAYS.*/PASS_MIN_DAYS\    10/" /etc/login.defs
+    sudo sed -ie "s/PASS_WARN_AGE.*/PASS_WARN_AGE\    7/" /etc/login.defs
+    sudo sed -ie "s/FAILLOG_ENAB.*/FAILLOG_ENAB\    yes/" /etc/login.defs
+    sudo sed -ie "s/LOG_UNKFAIL_ENAB.*/LOG_UNKFAIL_ENAB\    yes/" /etc/login.defs
+    sudo sed -ie "s/LOG_OK_LOGINS.*/LOG_OK_LOGINS\    yes/" /etc/login.defs
+    sudo sed -ie "s/SYSLOG_SU_ENAB.*/SYSLOG_SU_ENAB\    yes/" /etc/login.defs
+    sudo sed -ie "s/SYSLOG_SG_ENAB.*/SYSLOG_SG_ENAB\    yes/" /etc/login.defs
+    sudo sed -ie "s/LOGIN_RETRIES.*/LOGIN_RETRIES\    5/" /etc/login.defs
+    sudo sed -ie "s/ENCRYPT_METHOD.*/ENCRYPT_METHOD\    SHA512/" /etc/login.defs
+    sudo sed -ie "s/LOGIN_TIMEOUT.*/LOGIN_TIMEOUT\    60/" /etc/login.defs
     
 }
 
@@ -201,16 +201,16 @@ enable_autoupdate () {
     #   NONE
     sudo apt install -y unattended-upgrades apt-listchanges
     
-	# Set automatic updates
-	echo 'APT::Periodic::Update-Package-Lists "1";'             | sudo tee /etc/apt/apt.conf.d/10periodic > /dev/null
-	echo 'APT::Periodic::Download-Upgradeable-Packages "1";'    | sudo tee -a /etc/apt/apt.conf.d/10periodic > /dev/null
-	echo 'APT::Periodic::Unattended-Upgrade "1";'               | sudo tee -a /etc/apt/apt.conf.d/10periodic > /dev/null
-	echo 'APT::Periodic::AutocleanInterval "7";'                | sudo tee -a /etc/apt/apt.conf.d/10periodic > /dev/null
+    # Set automatic updates
+    echo 'APT::Periodic::Update-Package-Lists "1";'             | sudo tee /etc/apt/apt.conf.d/10periodic > /dev/null
+    echo 'APT::Periodic::Download-Upgradeable-Packages "1";'    | sudo tee -a /etc/apt/apt.conf.d/10periodic > /dev/null
+    echo 'APT::Periodic::Unattended-Upgrade "1";'               | sudo tee -a /etc/apt/apt.conf.d/10periodic > /dev/null
+    echo 'APT::Periodic::AutocleanInterval "7";'                | sudo tee -a /etc/apt/apt.conf.d/10periodic > /dev/null
 
-	echo 'APT::Periodic::Update-Package-Lists "1";'             | sudo tee /etc/apt/apt.conf.d/20auto-upgrades > /dev/null
-	echo 'APT::Periodic::Download-Upgradeable-Packages "1";'    | sudo tee -a /etc/apt/apt.conf.d/20auto-upgrades > /dev/null
-	echo 'APT::Periodic::Unattended-Upgrade "1";'               | sudo tee -a /etc/apt/apt.conf.d/20auto-upgrades > /dev/null
-	echo 'APT::Periodic::AutocleanInterval "7";'                | sudo tee -a /etc/apt/apt.conf.d/20auto-upgrades > /dev/null
+    echo 'APT::Periodic::Update-Package-Lists "1";'             | sudo tee /etc/apt/apt.conf.d/20auto-upgrades > /dev/null
+    echo 'APT::Periodic::Download-Upgradeable-Packages "1";'    | sudo tee -a /etc/apt/apt.conf.d/20auto-upgrades > /dev/null
+    echo 'APT::Periodic::Unattended-Upgrade "1";'               | sudo tee -a /etc/apt/apt.conf.d/20auto-upgrades > /dev/null
+    echo 'APT::Periodic::AutocleanInterval "7";'                | sudo tee -a /etc/apt/apt.conf.d/20auto-upgrades > /dev/null
 }
 
 fix_sources_list () { 
@@ -590,9 +590,9 @@ networking_sysctl_config () {
     # sudo sysctl -p /etc/sysctl.d/cybercent.conf
     sudo sysctl --system
 
-	# Disable IPV6
-	sudo sed -i '/^IPV6=yes/ c\IPV6=no\' /etc/default/ufw
-	echo 'blacklist ipv6' | sudo tee -a /etc/modprobe.d/blacklist > /dev/null
+    # Disable IPV6
+    sudo sed -i '/^IPV6=yes/ c\IPV6=no\' /etc/default/ufw
+    echo 'blacklist ipv6' | sudo tee -a /etc/modprobe.d/blacklist > /dev/null
 }
 
 firewall_setup () {
@@ -603,70 +603,70 @@ firewall_setup () {
     #   * sudo ufw allow <PORT>  (this is for each critical service) 
 
     # Flush/Delete firewall rules
-	sudo iptables -F
-	sudo iptables -X
-	sudo iptables -Z
+    sudo iptables -F
+    sudo iptables -X
+    sudo iptables -Z
 
     sudo apt install -y ufw
     sudo ufw enable 
     sudo ufw logging full
-	sudo ufw deny 23    #Block Telnet
-	sudo ufw deny 2049  #Block NFS
-	sudo ufw deny 515   #Block printer port
-	sudo ufw deny 111   #Block Sun rpc/NFS
+    sudo ufw deny 23    #Block Telnet
+    sudo ufw deny 2049  #Block NFS
+    sudo ufw deny 515   #Block printer port
+    sudo ufw deny 111   #Block Sun rpc/NFS
     sudo ufw status verbose > backup/networking/firewall_ufw.log 
 
     # Iptables specific
     # Block null packets (DoS)
-	sudo iptables -A INPUT -p tcp --tcp-flags ALL NONE -j DROP
+    sudo iptables -A INPUT -p tcp --tcp-flags ALL NONE -j DROP
 
-	# Block syn-flood attacks (DoS)
-	sudo iptables -A INPUT -p tcp ! --syn -m state --state NEW -j DROP
+    # Block syn-flood attacks (DoS)
+    sudo iptables -A INPUT -p tcp ! --syn -m state --state NEW -j DROP
 
-	#Drop incoming packets with fragments
-	sudo iptables -A INPUT -f -j DROP
+    #Drop incoming packets with fragments
+    sudo iptables -A INPUT -f -j DROP
 
-	# Block XMAS packets (DoS)
-	sudo iptables -A INPUT -p tcp --tcp-flags ALL ALL -j DROP
+    # Block XMAS packets (DoS)
+    sudo iptables -A INPUT -p tcp --tcp-flags ALL ALL -j DROP
 
-	# Allow internal traffic on the loopback device
-	sudo iptables -A INPUT -i lo -j ACCEPT
+    # Allow internal traffic on the loopback device
+    sudo iptables -A INPUT -i lo -j ACCEPT
 
-	# Allow ssh access
-	# sudo iptables -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+    # Allow ssh access
+    # sudo iptables -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
 
-	# Allow established connections
-	sudo iptables -I INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+    # Allow established connections
+    sudo iptables -I INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 
-	# Allow outgoing connections
-	sudo iptables -P OUTPUT ACCEPT
+    # Allow outgoing connections
+    sudo iptables -P OUTPUT ACCEPT
 
-	# Set default deny firewall policy
-	# sudo iptables -P INPUT DROP
+    # Set default deny firewall policy
+    # sudo iptables -P INPUT DROP
 
-	#Block Telnet
-	sudo iptables -A INPUT -p tcp -s 0/0 -d 0/0 --dport 23 -j DROP
+    #Block Telnet
+    sudo iptables -A INPUT -p tcp -s 0/0 -d 0/0 --dport 23 -j DROP
 
-	#Block NFS
-	sudo iptables -A INPUT -p tcp -s 0/0 -d 0/0 --dport 2049 -j DROP
+    #Block NFS
+    sudo iptables -A INPUT -p tcp -s 0/0 -d 0/0 --dport 2049 -j DROP
 
-	#Block X-Windows
-	sudo iptables -A INPUT -p tcp -s 0/0 -d 0/0 --dport 6000:6009 -j DROP
+    #Block X-Windows
+    sudo iptables -A INPUT -p tcp -s 0/0 -d 0/0 --dport 6000:6009 -j DROP
 
-	#Block X-Windows font server
-	sudo iptables -A INPUT -p tcp -s 0/0 -d 0/0 --dport 7100 -j DROP
+    #Block X-Windows font server
+    sudo iptables -A INPUT -p tcp -s 0/0 -d 0/0 --dport 7100 -j DROP
 
-	#Block printer port
-	sudo iptables -A INPUT -p tcp -s 0/0 -d 0/0 --dport 515 -j DROP
+    #Block printer port
+    sudo iptables -A INPUT -p tcp -s 0/0 -d 0/0 --dport 515 -j DROP
 
-	#Block Sun rpc/NFS
-	sudo iptables -A INPUT -p udp -s 0/0 -d 0/0 --dport 111 -j DROP
+    #Block Sun rpc/NFS
+    sudo iptables -A INPUT -p udp -s 0/0 -d 0/0 --dport 111 -j DROP
 
-	 #Deny outside packets from internet which claim to be from your loopback interface.
-	sudo iptables -A INPUT -p all -s localhost  -i eth0 -j DROP
+     #Deny outside packets from internet which claim to be from your loopback interface.
+    sudo iptables -A INPUT -p all -s localhost  -i eth0 -j DROP
 
-	# Save rules
-	sudo iptables-save > /etc/sudo iptables/rules.v4
+    # Save rules
+    sudo iptables-save > /etc/sudo iptables/rules.v4
 
 }
 
@@ -675,8 +675,8 @@ monitor_ports () {
     sudo netstat -peltu | column -t > backup/networking/open_ports.log
 
     sudo apt install nmap -y
-	sudo nmap -oN backup/networking/nmap.log -p- -v localhost 
-	sudo apt purge nmap -y
+    sudo nmap -oN backup/networking/nmap.log -p- -v localhost 
+    sudo apt purge nmap -y
 }
 
 # -------------------- System functions -------------------- 
@@ -711,19 +711,19 @@ system_sysctl_config() {
 disable_ctrl_alt_del () {
     echo 'exec shutdown -r now "Control-Alt-Delete pressed"' | sudo tee -a /etc/init/control-alt-delete.conf
     
-	sudo systemctl mask ctrl-alt-del.target
-	sudo systemctl daemon-reload
+    sudo systemctl mask ctrl-alt-del.target
+    sudo systemctl daemon-reload
 }
 
 file_perms () {
     sudo chown root:root /etc/fstab   # Scored
-    sudo chmod 644 /etc/fstab  		 # Scored
+    sudo chmod 644 /etc/fstab           # Scored
     sudo chown root:root /etc/group   # Scored
-    sudo chmod 644 /etc/group  		 # Scored
+    sudo chmod 644 /etc/group           # Scored
     sudo chown root:root /etc/shadow  # Scored
-    sudo chmod 400 /etc/shadow  		 # Scored	
+    sudo chmod 400 /etc/shadow           # Scored    
     sudo chown root:root /etc/apache2 # Scored
-    sudo chmod 755 /etc/apache2  	 # Scored
+    sudo chmod 755 /etc/apache2       # Scored
 
     sudo chmod 0600 /etc/securetty
     sudo chmod 644 /etc/crontab
@@ -733,7 +733,7 @@ file_perms () {
     sudo chmod 400 /etc/inetd.d
     sudo chmod 644 /etc/hosts.allow
     sudo chmod 440 /etc/ers
-    sudo chmod 640 /etc/shadow  			# Scored
+    sudo chmod 640 /etc/shadow              # Scored
     sudo chmod 600 /boot/grub/grub.cfg   # Scored
     sudo chmod 600 /etc/ssh/sshd_config  # Scored
     sudo chmod 600 /etc/gshadow-         # Scored
@@ -747,9 +747,9 @@ file_perms () {
     sudo chown root:root /etc/securetty
     sudo chown root:root /boot/grub/grub.cfg  # Scored
 
-    sudo chmod og-rwx /boot/grub/grub.cfg  	# Scored
-    sudo chown root:shadow /etc/shadow-  	
-    sudo chmod o-rwx,g-rw /etc/shadow-  		
+    sudo chmod og-rwx /boot/grub/grub.cfg      # Scored
+    sudo chown root:shadow /etc/shadow-      
+    sudo chmod o-rwx,g-rw /etc/shadow-          
     sudo chown root:shadow /etc/gshadow-  
     sudo chmod o-rwx,g-rw /etc/gshadow-
 
@@ -770,8 +770,8 @@ file_perms () {
 
 set_grub_password () {
     echo "${GREEN}Setting the GRUB password to" '"CyberPatriot1!"' "make sure to log in as root at startup.${RESET}"
-	#Secures Grub and sets password CyberPatriot1!
- 	sudo apt install grub-common -y
+    #Secures Grub and sets password CyberPatriot1!
+     sudo apt install grub-common -y
     echo "set superusers=\"root\"" | sudo tee -a /etc/grub.d/40_custom
     echo "password_pbkdf2 root grub.pbkdf2.sha512.10000.80D8ACE911690CBCE96A4B94DB030A138377FA49F6F03EB84DFB388E5D6A9746F8E81B92265CF6535ACEBE0C0B2DF5189E362493A2A9F5395DB87524D94F07D4.CECEB26E93C1FD33EF69D59D71FB7B51562C06385A5466B4138A9687D1248915555DE07495C87A50C75333FC2F3751B99605430241EF4FD30494477B5C2C9D9A" | sudo tee -a /etc/grub.d/40_custom
     update-grub

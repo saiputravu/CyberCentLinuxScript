@@ -716,14 +716,14 @@ disable_ctrl_alt_del () {
 }
 
 file_perms () {
-    sudo chown root:root /etc/fstab   # Scored
-    sudo chmod 644 /etc/fstab  	     # Scored
-    sudo chown root:root /etc/group   # Scored
-    sudo chmod 644 /etc/group  	     # Scored
-    sudo chown root:root /etc/shadow  # Scored
-    sudo chmod 400 /etc/shadow  	     # Scored	
-    sudo chown root:root /etc/apache2 # Scored
-    sudo chmod 755 /etc/apache2       # Scored
+    sudo chown root:root /etc/fstab     # Scored
+    sudo chmod 644 /etc/fstab           # Scored
+    sudo chown root:root /etc/group     # Scored
+    sudo chmod 644 /etc/group           # Scored
+    sudo chown root:root /etc/shadow    # Scored
+    sudo chmod 400 /etc/shadow  	    # Scored	
+    sudo chown root:root /etc/apache2   # Scored
+    sudo chmod 755 /etc/apache2         # Scored
 
     sudo chmod 0600 /etc/securetty
     sudo chmod 644 /etc/crontab
@@ -733,12 +733,12 @@ file_perms () {
     sudo chmod 400 /etc/inetd.d
     sudo chmod 644 /etc/hosts.allow
     sudo chmod 440 /etc/ers
-    sudo chmod 640 /etc/shadow  			# Scored
-    sudo chmod 600 /boot/grub/grub.cfg   # Scored
-    sudo chmod 600 /etc/ssh/sshd_config  # Scored
-    sudo chmod 600 /etc/gshadow-         # Scored
-    sudo chmod 600 /etc/group-           # Scored
-    sudo chmod 600 /etc/passwd-          # Scored
+    sudo chmod 640 /etc/shadow              # Scored
+    sudo chmod 600 /boot/grub/grub.cfg      # Scored
+    sudo chmod 600 /etc/ssh/sshd_config     # Scored
+    sudo chmod 600 /etc/gshadow-            # Scored
+    sudo chmod 600 /etc/group-              # Scored
+    sudo chmod 600 /etc/passwd-             # Scored
 
     sudo chown root:root /etc/ssh/sshd_config # Scored
     sudo chown root:root /etc/passwd-         # Scored
@@ -748,9 +748,9 @@ file_perms () {
     sudo chown root:root /boot/grub/grub.cfg  # Scored
 
     sudo chmod og-rwx /boot/grub/grub.cfg  	# Scored
-    sudo chown root:shadow /etc/shadow-  	
-    sudo chmod o-rwx,g-rw /etc/shadow-  		
-    sudo chown root:shadow /etc/gshadow-  
+    sudo chown root:shadow /etc/shadow-
+    sudo chmod o-rwx,g-rw /etc/shadow-
+    sudo chown root:shadow /etc/gshadow-
     sudo chmod o-rwx,g-rw /etc/gshadow-
 
     # Idk about this one chief 
@@ -771,7 +771,7 @@ file_perms () {
 set_grub_password () {
     echo "${GREEN}Setting the GRUB password to" '"CyberPatriot1!"' "make sure to log in as root at startup.${RESET}"
     #Secures Grub and sets password CyberPatriot1!
- 	sudo apt install grub-common -y
+    sudo apt install grub-common -y
     echo "set superusers=\"root\"" | sudo tee -a /etc/grub.d/40_custom
     echo "password_pbkdf2 root grub.pbkdf2.sha512.10000.80D8ACE911690CBCE96A4B94DB030A138377FA49F6F03EB84DFB388E5D6A9746F8E81B92265CF6535ACEBE0C0B2DF5189E362493A2A9F5395DB87524D94F07D4.CECEB26E93C1FD33EF69D59D71FB7B51562C06385A5466B4138A9687D1248915555DE07495C87A50C75333FC2F3751B99605430241EF4FD30494477B5C2C9D9A" | sudo tee -a /etc/grub.d/40_custom
     update-grub

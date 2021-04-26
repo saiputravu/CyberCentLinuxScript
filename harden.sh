@@ -24,8 +24,8 @@ RESET=$(tput sgr 0)
 # Global variables
 USERS=$(grep -E "/bin/.*sh" /etc/passwd | grep -v -e root -e `whoami` -e speech-dispatcher | cut -d":" -f1)
 
-DISTRO=$(lsb_release -i | cut -d: -f2 | sed "s/\    //g")
-CODENAME=$(lsb_release -c | cut -d: -f2 | sed "s/\    //g")
+DISTRO=$(lsb_release -i | cut -d: -f2 | sed "s/\\t//g")
+CODENAME=$(lsb_release -c | cut -d: -f2 | sed "s/\\t//g")
 
 # -------------------- User functions -------------------- 
 delete_unauthorised_users () {
@@ -167,17 +167,17 @@ login_policies () {
     cp /etc/login.defs backup/pam/common-password
 
     # Replace the arguments
-    sudo sed -ie "s/PASS_MAX_DAYS.*/PASS_MAX_DAYS\    90/" /etc/login.defs
-    sudo sed -ie "s/PASS_MIN_DAYS.*/PASS_MIN_DAYS\    10/" /etc/login.defs
-    sudo sed -ie "s/PASS_WARN_AGE.*/PASS_WARN_AGE\    7/" /etc/login.defs
-    sudo sed -ie "s/FAILLOG_ENAB.*/FAILLOG_ENAB\    yes/" /etc/login.defs
-    sudo sed -ie "s/LOG_UNKFAIL_ENAB.*/LOG_UNKFAIL_ENAB\    yes/" /etc/login.defs
-    sudo sed -ie "s/LOG_OK_LOGINS.*/LOG_OK_LOGINS\    yes/" /etc/login.defs
-    sudo sed -ie "s/SYSLOG_SU_ENAB.*/SYSLOG_SU_ENAB\    yes/" /etc/login.defs
-    sudo sed -ie "s/SYSLOG_SG_ENAB.*/SYSLOG_SG_ENAB\    yes/" /etc/login.defs
-    sudo sed -ie "s/LOGIN_RETRIES.*/LOGIN_RETRIES\    5/" /etc/login.defs
-    sudo sed -ie "s/ENCRYPT_METHOD.*/ENCRYPT_METHOD\    SHA512/" /etc/login.defs
-    sudo sed -ie "s/LOGIN_TIMEOUT.*/LOGIN_TIMEOUT\    60/" /etc/login.defs
+    sudo sed -ie "s/PASS_MAX_DAYS.*/PASS_MAX_DAYS\\t90/" /etc/login.defs
+    sudo sed -ie "s/PASS_MIN_DAYS.*/PASS_MIN_DAYS\\t10/" /etc/login.defs
+    sudo sed -ie "s/PASS_WARN_AGE.*/PASS_WARN_AGE\\t7/" /etc/login.defs
+    sudo sed -ie "s/FAILLOG_ENAB.*/FAILLOG_ENAB\\tyes/" /etc/login.defs
+    sudo sed -ie "s/LOG_UNKFAIL_ENAB.*/LOG_UNKFAIL_ENAB\\tyes/" /etc/login.defs
+    sudo sed -ie "s/LOG_OK_LOGINS.*/LOG_OK_LOGINS\\tyes/" /etc/login.defs
+    sudo sed -ie "s/SYSLOG_SU_ENAB.*/SYSLOG_SU_ENAB\\tyes/" /etc/login.defs
+    sudo sed -ie "s/SYSLOG_SG_ENAB.*/SYSLOG_SG_ENAB\\tyes/" /etc/login.defs
+    sudo sed -ie "s/LOGIN_RETRIES.*/LOGIN_RETRIES\\t5/" /etc/login.defs
+    sudo sed -ie "s/ENCRYPT_METHOD.*/ENCRYPT_METHOD\\tSHA512/" /etc/login.defs
+    sudo sed -ie "s/LOGIN_TIMEOUT.*/LOGIN_TIMEOUT\\t60/" /etc/login.defs
     
 }
 
@@ -717,11 +717,11 @@ disable_ctrl_alt_del () {
 
 file_perms () {
     sudo chown root:root /etc/fstab   # Scored
-    sudo chmod 644 /etc/fstab           # Scored
+    sudo chmod 644 /etc/fstab  	     # Scored
     sudo chown root:root /etc/group   # Scored
-    sudo chmod 644 /etc/group           # Scored
+    sudo chmod 644 /etc/group  	     # Scored
     sudo chown root:root /etc/shadow  # Scored
-    sudo chmod 400 /etc/shadow           # Scored    
+    sudo chmod 400 /etc/shadow  	     # Scored	
     sudo chown root:root /etc/apache2 # Scored
     sudo chmod 755 /etc/apache2       # Scored
 
@@ -733,7 +733,7 @@ file_perms () {
     sudo chmod 400 /etc/inetd.d
     sudo chmod 644 /etc/hosts.allow
     sudo chmod 440 /etc/ers
-    sudo chmod 640 /etc/shadow              # Scored
+    sudo chmod 640 /etc/shadow  			# Scored
     sudo chmod 600 /boot/grub/grub.cfg   # Scored
     sudo chmod 600 /etc/ssh/sshd_config  # Scored
     sudo chmod 600 /etc/gshadow-         # Scored
@@ -747,9 +747,9 @@ file_perms () {
     sudo chown root:root /etc/securetty
     sudo chown root:root /boot/grub/grub.cfg  # Scored
 
-    sudo chmod og-rwx /boot/grub/grub.cfg      # Scored
-    sudo chown root:shadow /etc/shadow-      
-    sudo chmod o-rwx,g-rw /etc/shadow-          
+    sudo chmod og-rwx /boot/grub/grub.cfg  	# Scored
+    sudo chown root:shadow /etc/shadow-  	
+    sudo chmod o-rwx,g-rw /etc/shadow-  		
     sudo chown root:shadow /etc/gshadow-  
     sudo chmod o-rwx,g-rw /etc/gshadow-
 
@@ -771,7 +771,7 @@ file_perms () {
 set_grub_password () {
     echo "${GREEN}Setting the GRUB password to" '"CyberPatriot1!"' "make sure to log in as root at startup.${RESET}"
     #Secures Grub and sets password CyberPatriot1!
-     sudo apt install grub-common -y
+ 	sudo apt install grub-common -y
     echo "set superusers=\"root\"" | sudo tee -a /etc/grub.d/40_custom
     echo "password_pbkdf2 root grub.pbkdf2.sha512.10000.80D8ACE911690CBCE96A4B94DB030A138377FA49F6F03EB84DFB388E5D6A9746F8E81B92265CF6535ACEBE0C0B2DF5189E362493A2A9F5395DB87524D94F07D4.CECEB26E93C1FD33EF69D59D71FB7B51562C06385A5466B4138A9687D1248915555DE07495C87A50C75333FC2F3751B99605430241EF4FD30494477B5C2C9D9A" | sudo tee -a /etc/grub.d/40_custom
     update-grub

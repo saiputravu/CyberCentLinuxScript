@@ -381,6 +381,32 @@ service_ssh () {
     sudo service ssh restart
 }
 
+service_samba () {
+    # Unique config file each time
+    sudo cp /etc/samba/smb.conf backup/services/smb_conf_`date +%s`.bak
+
+    sudo ufw allow samba
+
+    # smb.conf 
+    echo "restrict anonymous = 2"       | sudo tee -a /etc/samba/smb.conf > /dev/null
+    echo "encrypt passwords = True"     | sudo tee -a /etc/samba/smb.conf > /dev/null # Idk which one it takes
+    echo "encrypt passwords = yes"      | sudo tee -a /etc/samba/smb.conf > /dev/null
+    echo "read only = Yes"              | sudo tee -a /etc/samba/smb.conf > /dev/null
+    echo "ntlm auth = no"               | sudo tee -a /etc/samba/smb.conf > /dev/null
+    echo "obey pam restrictions = yes"  | sudo tee -a /etc/samba/smb.conf > /dev/null
+    echo "server signing = mandatory"   | sudo tee -a /etc/samba/smb.conf > /dev/null
+    echo "smb encrypt = mandatory"      | sudo tee -a /etc/samba/smb.conf > /dev/null
+    echo "min protocol = SMB2"          | sudo tee -a /etc/samba/smb.conf > /dev/null
+    echo "protocol = SMB2"              | sudo tee -a /etc/samba/smb.conf > /dev/null
+    echo "guest ok = no"                | sudo tee -a /etc/samba/smb.conf > /dev/null
+    echo "max log size = 24"            | sudo tee -a /etc/samba/smb.conf > /dev/null
+
+
+    echo "${YELLOW}Please read the samba file ${BOLD}/etc/samba/smb.conf${RESET}${YELLOW} as well and check its contents${RESET}"
+
+    sudo service smbd restart 
+}
+
 # -------------------- Malware functions --------------------
 anti_malware_software () {
     # Files necessary:

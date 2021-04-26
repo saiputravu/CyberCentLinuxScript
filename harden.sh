@@ -319,6 +319,68 @@ remove_malware () {
     done
 }
 
+# -------------------- Service functions --------------------
+service_ssh () {
+    # Unique config file each time
+    sudo cp /etc/ssh/sshd_config backup/services/sshd_config_`date +%s`.bak
+
+    sudo ufw allow ssh 
+
+    # sshd_config 
+    echo "Protocol 2" | sudo tee /etc/ssh/sshd_config > /dev/null
+
+    echo "PermitRootLogin no"      | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "PermitEmptyPasswords no" | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "LoginGraceTime 2m"       | sudo tee -a /etc/ssh/sshd_config > /dev/null
+
+    echo "X11Forwarding no"         | sudo tee -a /etc/ssh/sshd_config > /dev/null 
+    echo "AllowTcpForwarding no"    | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "AllowAgentForwarding no"  | sudo tee -a /etc/ssh/sshd_config > /dev/null
+
+    echo "UsePAM yes"                   | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "PasswordAuthentication no"    | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "HostBasedAuthentication no"   | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "RhostsRSAAuthentication no"   | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "PubkeyAuthentication yes"     | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "IgnoreRhosts yes"             | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "StrictModes yes"              | sudo tee -a /etc/ssh/sshd_config > /dev/null
+
+    echo "UsePrivilegeSeparation yes"   | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "PrintLastLog no"              | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "PermitUserEnvironment no"     | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "SyslogFacility AUTH"          | sudo tee -a /etc/ssh/sshd_config > /dev/null
+
+    echo "LogLevel VERBOSE" | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "MaxAuthTries 3"   | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "MaxStartups 2"    | sudo tee -a /etc/ssh/sshd_config > /dev/null
+
+    echo "ChallengeResponseAuthentication no"   | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "KerberosAuthentication no"            | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "GSSAPIAuthentication no"              | sudo tee -a /etc/ssh/sshd_config > /dev/null
+
+    echo "UseDNS no"        | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "PermitTunnel no"  | sudo tee -a /etc/ssh/sshd_config > /dev/null
+
+    echo "ClientAliveInterval 300"  | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    echo "ClientAliveCountMax 0"    | sudo tee -a /etc/ssh/sshd_config > /dev/null
+
+    echo 'MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256' | sudo tee -a /etc/ssh/sshd_config > /dev/null
+
+    echo "Banner /etc/issue.net" | sudo tee -a /etc/ssh/sshd_config > /dev/null
+
+    # New welcome banner
+    echo "Cyber Centurion" | sudo tee /etc/issue.net > /dev/null
+
+    GOODSYNTAX=$(sudo sshd -t)
+    if [[ ! -z $GOODSYNTAX ]]
+    then
+        echo "${RED}Sshd config has some faults, please check script or ${BOLD}/etc/ssh/sshd_config${RESET}"
+        read -pr
+    fi
+
+    sudo service ssh restart
+}
+
 # -------------------- Malware functions --------------------
 anti_malware_software () {
     # Files necessary:

@@ -522,6 +522,109 @@ service_proftpd () {
     sudo service proftpd restart 
 }
 
+service_apache2 () {
+    # Unique config file each time
+    sudo cp /etc/apache2/apache2.conf backup/services/apache2_conf_`date +%s`.bak
+    sudo cp /etc/apache2/conf-available/security.conf backup/services/apache2_security_conf_`date +%s`.bak
+
+    sudo ufw allow apache
+    sudo ufw allow https 
+    sudo ufw allow http
+
+    # Mod security  & enabling/disabling modules
+    sudo $APT install libapache2-mod-security2 -y
+
+    sudo a2enmod userdir
+    sudo a2enmod headers
+    sudo a2enmod rewrite
+    sudo a2dismod imap
+    sudo a2dismod include
+    sudo a2dismod info
+    sudo a2dismod userdir
+    echo "Yes, do as I say!" | sudo a2dismod autoindex
+
+    # apache.conf
+    echo "HostnameLookups Off"              | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo "LogLevel warn"                    | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo "ServerTokens Prod"                | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo "ServerSignature Off"              | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo "Options all -Indexes"             | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo "Header unset ETag"                | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo "Header always unset X-Powered-By" | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo "FileETag None"                    | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo "TraceEnable off"                  | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo "Timeout 60"                       | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    
+    # Doesn't work for some reason
+    echo "RewriteEngine On"                         | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo 'RewriteCond %{THE_REQUEST} !HTTP/1\.1$'   | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo 'RewriteRule .* - [F]'                     | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+
+    echo '<IfModule mod_headers.c>'                         | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo '    Header set X-XSS-Protection 1;'               | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo '</IfModule>'                                      | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+
+    # Secure /
+    echo "<Directory />"            | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo "    Options -Indexes"     | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo "    AllowOverride None"   | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo "    Order Deny,Allow"     | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo "    Options None"         | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo "    Deny from all"        | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo "</Directory>"             | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    
+    # Secure /var/www/html
+    echo "<Directory /var/www/html>"    | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo "    Options -Indexes"         | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+    echo "</Directory>"                 | sudo tee -a /etc/apache2/apache2.conf > /dev/null
+
+    # security.conf
+    # Enable HTTPOnly and Secure Flags
+    echo 'Header edit Set-Cookie ^(.*)\$ \$1;HttpOnly;Secure'                                   | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null
+
+    # Clickjacking Attack Protection
+    echo 'Header always append X-Frame-Options SAMEORIGIN'                                      | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null
+
+    # XSS Protection
+    echo 'Header set X-XSS-Protection "1; mode=block"'                                          | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null
+
+    # Enforce secure connections to the server
+    echo 'Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"'    | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null  
+
+    # MIME sniffing Protection
+    echo 'Header set X-Content-Type-Options: "nosniff"'                                         | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null
+
+    # Prevent Cross-site scripting and injections
+    echo 'Header set Content-Security-Policy "default-src '"'self'"';"'                         | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null
+
+	# Secure root directory
+    echo "<Directory />"            | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null
+    echo "  Options -Indexes"       | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null
+    echo "  AllowOverride None"     | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null
+    echo "  Order Deny,Allow"       | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null
+    echo "  Deny from all"          | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null
+    echo "</Directory>"             | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null
+
+    # Secure html directory
+    echo "<Directory /var/www/html>"        | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null
+    echo "  Options -Indexes -Includes"     | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null
+    echo "  AllowOverride None"             | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null
+    echo "  Order Allow,Deny"               | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null
+    echo "  Allow from All"                 | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null
+    echo "</Directory>"                     | sudo tee -a /etc/apache2/conf-available/security.conf > /dev/null
+
+    # ssl.conf
+    # TLS only
+    sudo sed -i "s/SSLProtocol.*/SSLProtocol –ALL +TLSv1 +TLSv1.1 +TLSv1.2/" /etc/apache2/mods-available/ssl.conf
+    # Stronger cipher suite
+    sudo sed -i "s/SSLCipherSuite.*/SSLCipherSuite HIGH:\!MEDIUM:\!aNULL:\!MD5:\!RC4/" /etc/apache2/mods-available/ssl.conf
+
+    sudo chown -R root:root /etc/apache2
+    sudo chown -R root:root /etc/apache 2> /dev/null
+
+    sudo service apache2 restart 
+}
+
 # -------------------- Malware functions --------------------
 anti_malware_software () {
     # Files necessary:

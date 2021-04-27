@@ -133,7 +133,7 @@ disable_guests () {
     if [[ -z CONFIGSET ]] 
     then 
         echo "${RED}LightDM config not set, please check manually.${RESET}"
-        read -pr "Press <enter> to continue"
+        read -rp "Press <enter> to continue"
     fi
 
     sudo service lightdm restart
@@ -377,7 +377,7 @@ service_ssh () {
     if [[ ! -z $GOODSYNTAX ]]
     then
         echo "${RED}Sshd config has some faults, please check script or ${BOLD}/etc/ssh/sshd_config${RESET}"
-        read -pr
+        read -rp ""
     fi
 
     sudo service ssh restart
@@ -636,6 +636,70 @@ service_apache2 () {
     sudo service apache2 restart 
 }
 
+service_php () {
+    local PHPCONFIG=/etc/php5/apache2/php.ini
+    if [[ ! -f $PHPCONFIG ]]
+    then 
+        echo "${RED}Php.ini does not exist at ${PHPCONFIG}${RESET}"
+        echo -n "${YELLOW}Please input the new location: ${RESET}"
+        read -rp "" PHPCONFIG 
+        if [[ ! -f $PHPCONFIG ]]
+        then
+            echo "${RED}${BOLD}The file you have entered does not exist, skipping php ... ${RESET}"
+            return 1
+        fi
+    fi
+
+    # Unique config file each time
+    sudo cp $PHPCONFIG backup/services/php_ini_`date +%s`.bak
+
+    # Safe mode
+    echo 'sql.safe_mode = On'   | sudo tee -a $PHPCONFIG
+    echo 'safe_mode = On'       | sudo tee -a $PHPCONFIG
+    echo 'safe_mode_gid = On'   | sudo tee -a $PHPCONFIG
+
+    # Disable Global variables
+    echo 'register_globals = Off' | sudo tee -a $PHPCONFIG
+
+    # Disable tracking, HTML, and display errors
+    sudo sed -i "s/^;\?track_errors.*/track_errors = Off/" $PHPCONFIG
+    sudo sed -i "s/^;\?html_errors.*/html_errors = Off/" $PHPCONFIG
+    sudo sed -i "s/^;\?display_errors.*/display_errors = Off/" $PHPCONFIG
+    sudo sed -i "s/^;\?expose_php.*/expose_php = Off/" $PHPCONFIG
+    sudo sed -i "s/^;\?mail\.add_x_header.*/mail\.add_x_header = Off/" $PHPCONFIG
+
+    # Disable Remote File Includes
+    sudo sed -i "s/^;\?allow_url_fopen.*/allow_url_fopen = Off/" $PHPCONFIG
+    sudo sed -i "s/^;\?allow_url_include.*/allow_url_include = Off/" $PHPCONFIG
+
+    # Restrict File Uploads
+    sudo sed -i "s/^;\?file_uploads.*/file_uploads = Off/" $PHPCONFIG
+
+    # Control POST/Upload size
+    sudo sed -i "s/^;\?post_max_size.*/post_max_size = 1K/" $PHPCONFIG
+    sudo sed -i "s/^;\?upload_max_filesize.*/upload_max_filesize = 2M/" $PHPCONFIG
+
+    # Protect sessions
+    sudo sed -i "s/^;\?session\.cookie_httponly.*/session\.cookie_httponly = 1/" $PHPCONFIG
+
+    # General
+    echo "magic_quotes_gpc = Off" | sudo tee -a $PHPCONFIG
+    sudo sed -i "s/^;\?session\.use_strict_mode.*/session\.use_strict_mode = On/" $PHPCONFIG
+
+    # sudo sed -i 
+    sudo sed -i "s/^;\?disable_functions.*/disable_functions = php_uname, getmyuid, getmypid, passthru, leak, listen, diskfreespace, tmpfile, link, ignore_user_abord, shell_exec, dl, set_time_limit, exec, system, highlight_file, source, show_source, fpaththru, virtual, posix_ctermid, posix_getcwd, posix_getegid, posix_geteuid, posix_getgid, posix_getgrgid, posix_getgrnam, posix_getgroups, posix_getlogin, posix_getpgid, posix_getpgrp, posix_getpid, posix, _getppid, posix_getpwnam, posix_getpwuid, posix_getrlimit, posix_getsid, posix_getuid, posix_isatty, posix_kill, posix_mkfifo, posix_setegid, posix_seteuid, posix_setgid, posix_setpgid, posix_setsid, posix_setuid, posix_times, posix_ttyname, posix_uname, proc_open, proc_close, proc_get_status, proc_nice, proc_terminate, phpinfo/" $PHPCONFIG
+    # disable_functions = exec,shell_exec,passthru,system,popen,curl_exec,curl_multi_exec,parse_ini_file,show_source,proc_open,pcntl_exec 
+
+    sudo sed -i "s/^;\?max_execution_time.*/max_execution_time = 30/" $PHPCONFIG
+    sudo sed -i "s/^;\?max_input_time.*/max_input_time = 30/" $PHPCONFIG
+    sudo sed -i "s/^;\?memory_limit.*/memory_limit = 40M/" $PHPCONFIG
+    # open_basedir = "/home/user/public_html" # -> correct html base dir 
+
+
+    echo "${YELLOW}Checkout the PHP section in the guide, install suhosin${RESET}"
+    sudo service apache2 restart
+}
+
 service_nginx () {
     # Unique config file each time
     sudo cp /etc/nginx/nginx.conf backup/services/nginx_conf_`date +%s`.bak
@@ -702,6 +766,43 @@ service_nginx () {
     sudo service nginx restart 
 }
 
+
+service_mysql () {
+    # Unique config file each time
+    sudo cp $PHPCONFIG backup/services/php_ini_`date +%s`.bak
+
+    sudo ufw allow mysql 
+
+    echo "${}[*] Setup mysql by running 'sudo mysql_secure_installation' ${RESET}"
+    read -rp "Press <enter> when you are done" 
+
+    #Disables LOCAL INFILE
+    echo "local-infile=0" | sudo tee -a /etc/mysql/my.cnf
+
+    #Lowers database privileges
+    echo "skip-show-database" | sudo tee -a /etc/mysql/my.cnf
+
+    # Disable remote access
+    echo "bind-address=127.0.0.1" | sudo tee -a /etc/mysql/my.cnf
+    sed -i '/bind-address/ c\bind-address = 127.0.0.1' /etc/mysql/my.cnf
+
+    #Disables symbolic links
+    echo "symbolic-links=0" | sudo tee -a /etc/mysql/my.cnf
+
+    #Sets password expiration
+    echo "default_password_lifetime = 90" | sudo tee -a /etc/mysql/my.cnf
+
+    #Sets root account password
+    echo "[mysqladmin]" | sudo tee -a /etc/mysql/my.cnf
+    echo "user = root" | sudo tee -a /etc/mysql/my.cnf
+    echo "password = CyberPatriot1!" | sudo tee -a /etc/mysql/my.cnf
+
+    #Sets packet restrictions
+    echo "key_buffer_size         = 16M" | sudo tee -a /etc/mysql/my.cnf
+    echo "max_allowed_packet      = 16M" | sudo tee -a /etc/mysql/my.cnf
+
+    sudo service mysql restart
+}
 
 # -------------------- Malware functions --------------------
 anti_malware_software () {

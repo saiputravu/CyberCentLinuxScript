@@ -555,7 +555,6 @@ service_apache2 () {
     echo "TraceEnable off"                  | sudo tee -a /etc/apache2/apache2.conf > /dev/null
     echo "Timeout 60"                       | sudo tee -a /etc/apache2/apache2.conf > /dev/null
     
-    # Doesn't work for some reason
     echo "RewriteEngine On"                         | sudo tee -a /etc/apache2/apache2.conf > /dev/null
     echo 'RewriteCond %{THE_REQUEST} !HTTP/1\.1$'   | sudo tee -a /etc/apache2/apache2.conf > /dev/null
     echo 'RewriteRule .* - [F]'                     | sudo tee -a /etc/apache2/apache2.conf > /dev/null

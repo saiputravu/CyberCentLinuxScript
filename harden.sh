@@ -220,7 +220,7 @@ remove_malware () {
 anti_malware_software () {
     # Files necessary:
     #   NONE
-    sudo apt install -y clamav, rkhunter, chrootkit, lynis 
+    sudo apt install -y chkrootkit clamav rkhunter apparmor apparmor-profiles 
 }
 
 run_antimalware () {
@@ -236,6 +236,12 @@ run_antimalware () {
     freshclam --stdout
     systemctl start clamav-freshclam
     clamscan -r -i --stdout --exclude-dir="^/sys"
+
+    #/usr/share/lynis/lynis update info   NEED TO FIX/HELP
+    #/usr/share/lynis/lynis audit system  NEED TO FIX/HELP
+    sudo wget https://downloads.cisofy.com/lynis/lynis-2.7.0.tar.gz -O ~/Desktop/lynis.tar.gz
+    sudo tar -xzf ~/Desktop/lynis.tar.gz --directory /usr/share
+
 }
 
 # -------------------- Networking functions -------------------- 

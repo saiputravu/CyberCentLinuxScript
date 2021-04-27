@@ -543,6 +543,18 @@ service_apache2 () {
     sudo a2dismod userdir
     echo "Yes, do as I say!" | sudo a2dismod autoindex
 
+    # Ask to remove default index.html
+    local answer=""
+    echo -n "${CYAN}Remove default index.html [${GREEN}y${CYAN}|${RED}N${CYAN}] : ${RESET}"
+    read -rp "" answer
+    case $answer in 
+        y|Y)
+            echo "" | sudo tee /var/www/html/index.html
+            ;;
+        n|N)
+            ;; # Do nothing
+    esac
+
     # apache.conf
     echo "HostnameLookups Off"              | sudo tee -a /etc/apache2/apache2.conf > /dev/null
     echo "LogLevel warn"                    | sudo tee -a /etc/apache2/apache2.conf > /dev/null
@@ -623,6 +635,73 @@ service_apache2 () {
 
     sudo service apache2 restart 
 }
+
+service_nginx () {
+    # Unique config file each time
+    sudo cp /etc/nginx/nginx.conf backup/services/nginx_conf_`date +%s`.bak
+    sudo cp /etc/nginx/sites-available/default backup/services/nginx_default_`date +%s`.bak
+
+    sudo ufw allow 'Nginx Full'
+    sudo ufw allow https 
+    sudo ufw allow http
+
+    # Ask to remove default index.html
+    local answer=""
+    echo -n "${CYAN}Remove default index.html [${GREEN}y${CYAN}|${RED}N${CYAN}] : ${RESET}"
+    read -rp "" answer
+    case $answer in 
+        y|Y)
+            echo "" | sudo tee /var/www/html/index.html
+            ;;
+        n|N)
+            ;; # Do nothing
+    esac
+
+    # nginx.conf
+    ETAGEXISTS=$(grep -i etag /etc/nginx/nginx.conf)
+
+    if [[ -z $ETAGEXISTS ]]
+    then
+        sudo sed -ie "s/#\?\\s*server_tokens.*/server_tokens off;\n\tetag off;/g" /etc/nginx/nginx.conf
+    else
+        sudo sed -ie "s/#\?\\s*server_tokens.*/server_tokens off;/g" /etc/nginx/nginx.conf
+        sudo sed -ie "s/#\?\\s*etag.*/etag off;/g" /etc/nginx/nginx.conf
+    fi
+
+    # Use strong cipher suites
+    sudo sed -i "s/ssl_prefer_server_ciphers on;/ssl_prefer_server_ciphers on;\nssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384;/" /etc/nginx/nginx.conf
+
+    # Set ssl session timeout
+    sudo sed -i "s/ssl_prefer_server_ciphers on;/ssl_prefer_server_ciphers on;\nssl_session_timeout 5m;/" /etc/nginx/nginx.conf
+
+    # Set ssl session cache
+    sudo sed -i "s/ssl_session_timeout 5m;/ssl_session_cache shared:SSL:10m;\nssl_session_timeout 5m;/" /etc/nginx/nginx.conf
+
+    # sites-available/default
+    # Enable HttpOnly and Secure flags
+    sudo sed -i "s|^\s*try_files \\\$uri \\\$uri/ =404;|try_files \\\$uri \\\$uri/ =404;\nproxy_cookie_path / \"/; secure; HttpOnly\";|" /etc/nginx/sites-available/default
+
+    # Clickjacking Attack Protection
+    sudo sed -i "s|root /var/www/html;|root /var/www/html;\nadd_header X-Frame-Options DENY;|" /etc/nginx/sites-available/default
+
+    # XSS Protection
+    sudo sed -i "s|root /var/www/html;|root /var/www/html;\nadd_header X-XSS-Protection \"1; mode=block\";|" /etc/nginx/sites-available/default
+
+    # Enforce secure connections to the server
+    sudo sed -i "s|root /var/www/html;|root /var/www/html;\nadd_header Strict-Transport-Security \"max-age=31536000; includeSubdomains;\";|" /etc/nginx/sites-available/default
+
+    # MIME sniffing Protection
+    sudo sed -i "s|root /var/www/html;|root /var/www/html;\nadd_header X-Content-Type-Options nosniff;|" /etc/nginx/sites-available/default
+
+    # Prevent Cross-site scripting and injections
+    sudo sed -i "s|root /var/www/html;|root /var/www/html;\nadd_header Content-Security-Policy \"default-src 'self';\";|" /etc/nginx/sites-available/default
+
+    # Set X-Robots-Tag
+    sudo sed -i "s|root /var/www/html;|root /var/www/html;\nadd_header X-Robots-Tag none;|" /etc/nginx/sites-available/default
+
+    sudo service nginx restart 
+}
+
 
 # -------------------- Malware functions --------------------
 anti_malware_software () {

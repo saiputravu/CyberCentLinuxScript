@@ -1588,9 +1588,18 @@ main () {
     # Ensure all config files can be edited
     chattr_all_config_files
 
-    # Apt fast install
-    sudo apt install -y software-properties-common
-    sudo add-apt-repository ppa:apt-fast/stable -y
+    # Apt fast install (different for ubuntu and debian)
+    case $DISTRO in 
+        Ubuntu)
+            sudo apt install -y software-properties-common
+            sudo add-apt-repository ppa:apt-fast/stable -y
+        Debian)
+            sudo rm -f /etc/apt/sources.list.d/*
+            echo "deb http://ppa.launchpad.net/apt-fast/stable/ubuntu bionic main" | sudo tee /etc/apt/sources.list.d/apt-fast.list > /dev/null
+            echo "deb-src http://ppa.launchpad.net/apt-fast/stable/ubuntu bionic main" | sudo tee -a /etc/apt/sources.list.d/apt-fast.list > /dev/null
+            sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A2166B8DE8BDC3367D1901C11EE2FF37CA8DA16B
+    esac
+
     sudo apt-get update
     sudo DEBIAN_FRONTEND=noninteractive apt install -y apt-fast && APT=apt-fast
 

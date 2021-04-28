@@ -807,7 +807,11 @@ service_mysql () {
 anti_malware_software () {
     # Files necessary:
     #   NONE
+<<<<<<< HEAD
+    sudo apt install -y chkrootkit clamav rkhunter apparmor apparmor-profiles 
+=======
     sudo $APT install -y clamav, rkhunter, chrootkit, lynis 
+>>>>>>> 9f9c378eee40f7adb82403d85b07528ce60e510b
 }
 
 run_antimalware () {
@@ -821,10 +825,23 @@ run_antimalware () {
     sudo rkhunter --propupd
     sudo rkhunter -c --enable all --disable none
 
+<<<<<<< HEAD
+    systemctl stop clamav-freshclam
+    freshclam --stdout
+    systemctl start clamav-freshclam
+    clamscan -r -i --stdout --exclude-dir="^/sys"
+
+    #/usr/share/lynis/lynis update info   NEED TO FIX/HELP
+    #/usr/share/lynis/lynis audit system  NEED TO FIX/HELP
+    sudo wget https://downloads.cisofy.com/lynis/lynis-2.7.0.tar.gz -O ~/Desktop/lynis.tar.gz
+    sudo tar -xzf ~/Desktop/lynis.tar.gz --directory /usr/share
+
+=======
     sudo systemctl stop clamav-freshclam
     sudo freshclam --stdout
     sudo systemctl start clamav-freshclam
     sudo clamscan -r -i --stdout --exclude-dir="^/sys"
+>>>>>>> 9f9c378eee40f7adb82403d85b07528ce60e510b
 }
 
 # -------------------- Networking functions -------------------- 

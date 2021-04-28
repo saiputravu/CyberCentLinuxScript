@@ -860,6 +860,157 @@ install_and_run_linenum () {
     backup/misc/linenum.sh -t | tee backup/misc/linenum_output_`date +%s`.log > /dev/null &
 }
 
+log_current_processes () {
+    # Full process list 
+    ps auxef > backup/misc/all_processes_`date +%s`.log
+    ps auxe | grep -E "^root" > backup/misc/root_processes_`date +%s`.log 
+}
+
+check_and_reset_crontabs () {
+    local normal_crontab='# /etc/crontab: system-wide crontab\n
+    # Unlike any other crontab you dont have to run the crontab\n
+    # command to install the new version when you edit this file\n
+    # and files in /etc/cron.d. These files also have username fields,\n
+    # that none of the other crontabs do.\n
+
+    SHELL=/bin/sh\n
+    PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n
+
+    # m h dom mon dow user  command\n
+    17 \*    \* \* \*   root    cd / && run-parts --report /etc/cron.hourly\n
+    25 6    \* \* \*   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.daily )\n
+    47 6    \* \* 7   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.weekly )\n
+    52 6    1 \* \*   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.monthly )\n
+    #'
+    
+    # Save a backup of the crontab and then just replace it with an empty one
+    sudo cp /etc/crontab backup/services/crons/crontab
+    echo -e $normal_crontab | sed "s/^ //g; s/\\\*//g" | sudo tee /etc/crontab > /dev/null
+
+    # List all the crontabs 
+    #sudo ls -la /var/spool/cron/* 2> /dev/null | tee backup/services/crontabs_
+    sudo ls -la /etc/cron.d/* 2> /dev/null      | tee backup/services/crons/crontab_system_crons.log > /dev/null
+    sudo ls -la /etc/cron.hourly/ 2> /dev/null  | tee -a backup/services/crons/crontab_system_crons.log > /dev/null
+    sudo ls -la /etc/cron.daily/* 2> /dev/null  | tee -a backup/services/crons/crontab_system_crons.log  > /dev/null
+    sudo ls -la /etc/cron.weekly/* 2> /dev/null | tee -a backup/services/crons/crontab_system_crons.log > /dev/null
+    sudo ls -la /etc/cron.monthly/* 2> /dev/null| tee -a backup/services/crons/crontab_system_crons.log > /dev/null
+
+    local user_crons=$(sudo ls /var/spool/cron/crontabs)
+    local answer=""
+    if [[ ! -z $user_crons ]]
+    then 
+        echo "${YELLOW}[!] Detected user crontabs at /var/spool/cron/crontabs for users: ${user_crons}${RESET}"
+        echo -n "${CYAN}Move user crontabs to quarantine [${GREEN}y${CYAN}|${RED}N${CYAN}] : ${RESET}"
+        read -rp "" answer
+        case $answer in 
+            y|Y)
+                echo
+                echo "${GREEN}[*] Crontabs moved to backup/services/crons/ ${RESET}"
+                for cron in $user_crons
+                do 
+                    sudo mv /var/spool/cron/crontabs/$cron backup/services/crons/$cron
+                done 
+                ;;
+            n|N)
+                ;; # Do nothing
+        esac
+    fi
+}
+
+startup_scripts () {
+    # Get all init scripts
+    ls -la /etc/init/ > backup/services/startup/init_scripts.log
+    ls -la /etc/init.d/ >> backup/services/startup/init_scripts.log
+
+    # Get all rc scripts
+    ls -la /etc/rc*.d > backup/services/startup/rc_scripts.log
+
+    # Backup and fix rc.local
+    local good_rc_local="#!/bin/sh -e\nexit 0"
+    sudo cp /etc/rc.local backup/services/startup/rc_local_`date +%s`.bak 
+    echo -e '#!/bin/sh -e\nexit 0' | sudo tee /etc/rc.local > /dev/null
+
+    # Find all newly edited files in /etc/
+    echo "${GREEN}[*] Files edited recently in backup/misc ${RESET}"
+    sudo find /etc/ -type f -newermt 2020-09-01 -ls | tee backup/misc/config_files_edited_since_sept_2020.log > /dev/null
+    sudo find /etc/ -type f -mtime -3 -ls | tee backup/misc/config_files_edited_last_3_days.log > /dev/null
+}
+
+setup_auditd () {
+    sudo $APT install auditd -y
+
+	echo "
+	# First rule - delete all
+	-D
+	#Ensure events that modify date and time information are collected
+	-a always,exit -F arch=b32 -S adjtimex -S settimeofday -S stime -k time-change
+	-a always,exit -F arch=b64 -S clock_settime -k time-change
+	-a always,exit -F arch=b32 -S clock_settime -k time-change
+	-w /etc/localtime -p wa -k time-change
+	#Ensure events that modify user/group information are collected
+	-w /etc/group -p wa -k identity
+	-w /etc/passwd -p wa -k identity
+	-w /etc/gshadow -p wa -k identity
+	-w /etc/shadow -p wa -k identity
+	-w /etc/security/opasswd -p wa -k identity
+	#Ensure events that modify the system's network environment are collected
+	-a always,exit -F arch=b32 -S sethostname -S setdomainname -k system-locale
+	-a always,exit -F arch=b64 -S sethostname -S setdomainname -k system-locale
+	-w /etc/issue -p wa -k system-locale
+	-w /etc/issue.net -p wa -k system-locale
+	-w /etc/hosts -p wa -k system-locale
+	-w /etc/network -p wa -k system-locale
+	-w /etc/networks -p wa -k system-locale
+	#Ensure events that modify system's MAC are collected
+	-w /etc/apparmor/ -p wa -k MAC-policy
+	-w /etc/apparmor.d/ -p wa -k MAC-policy
+	#Ensure login and logouts events are collected
+	-w /var/log/faillog -p wa -k logins
+	-w /var/log/lastlog -p wa -k logins
+	-w /var/log/tallylog -p wa -k logins
+	#Ensure session initiation information is collected
+	-w /var/run/utmp -p wa -k session
+	-w /var/run/wtmp -p wa -k session
+	-w /var/run/btmp -p wa -k session
+	#Ensure discretionary access control permission modification events are collected
+	-a always,exit -F arch=b64 -S chmod -S fchmod -S fchmodat -F auid>=1000 -F auid!=4294967295 -k perm_mod
+	-a always,exit -F arch=b32 -S chmod -S fchmod -S fchmodat -F auid>=1000 -F auid!=4294967295 -k perm_mod
+	-a always,exit -F arch=b64 -S chown -S fchown -S fchownat -S lchown -F auid>=1000 -F auid!=4294967295 -k perm_mod
+	-a always,exit -F arch=b32 -S chown -S fchown -S fchownat -S lchown -F auid>=1000 -F auid!=4294967295 -k perm_mod
+	-a always,exit -F arch=b64 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -F auid>=1000 -F auid!=4294967295 -k perm_mod
+	-a always,exit -F arch=b32 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -F auid>=1000 -F auid!=4294967295 -k perm_mod
+	#Ensure unsuccessful unauthorized file access attempts are collected
+	-a always,exit -F arch=b64 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k access
+	-a always,exit -F arch=b32 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=4294967295 -k access
+	-a always,exit -F arch=b64 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k access
+	-a always,exit -F arch=b32 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=4294967295 -k access
+	#Ensure successful file system mounts are collected
+	-a always,exit -F arch=b64 -S mount -F auid>=1000 -F auid!=4294967295 -k mounts
+	-a always,exit -F arch=b32 -S mount -F auid>=1000 -F auid!=4294967295 -k mounts
+	#Ensure file deletion events by users are collected
+	-a always,exit -F arch=b64 -S unlink -S unlinkat -S rename -S renameat -F auid>=1000 -F auid!=4294967295 -k delete
+	-a always,exit -F arch=b32 -S unlink -S unlinkat -S rename -S renameat -F auid>=1000 -F auid!=4294967295 -k delete
+	#Ensure changes to system administration scope (ers) is collected
+	-w /etc/ers -p wa -k scope
+	-w /etc/ers.d -p wa -k scope
+	#Ensure system administrator actions (log) are collected
+	-w /var/log/.log -p wa -k actions
+	#Ensure kernel module loading and unloading is collected
+	-w /sbin/insmod -p x -k modules
+	-w /sbin/rmmod -p x -k modules
+	-w /sbin/modprobe -p x -k modules
+	-a always,exit -F arch=b64 -S init_module -S delete_module -k modules
+	# increase the buffers to survive stress events. make this bigger for busy systems.
+	-b 1024
+	# monitor unlink() and rmdir() system calls.
+	-a exit,always -S unlink -S rmdir
+	# monitor open() system call by Linux UID 1001.
+	-a exit,always -S open -F loginuid=1001
+	" | sudo tee -a /etc/audit/audit.rules > /dev/null
+
+    sudo service auditd restart
+}
+
 # -------------------- Malware functions --------------------
 anti_malware_software () {
     # Files necessary:
@@ -1349,7 +1500,23 @@ main_services () {
 
     # Install and run linenum.sh and store results in a text file
     echo "${GREEN}[*] Installing and running linenum in the background, for more info check backup/misc/ ... ${RESET}"
-    install_and_run_pspy
+    install_and_run_linenum
+
+    # Log all currently running processes
+    echo "${GREEN}[*] Logging all current processes to backup/misc/ ... ${RESET}"
+    log_current_processes
+
+    # Log all crontabs, and move to quarantine
+    echo "${GREEN}[*] Logging all crontabs ... ${RESET}"
+    check_and_reset_crontabs
+
+    # Log all startup scripts, move any important ones and overwrite with default value
+    echo "${GREEN}[*] Looking through any startup/boot-up scripts ... ${RESET}"
+    startup_scripts
+
+    # Probably should be under system but i cba
+    echo "${GREEN}[*] Setting up auditd ... ${RESET}"
+    setup_auditd
 }
 
 main_networking () {
@@ -1404,7 +1571,11 @@ main () {
     mkdir -p backup/users
     mkdir -p backup/pam
     mkdir -p backup/apt
+    
     mkdir -p backup/services
+    mkdir -p backup/services/crons
+    mkdir -p backup/services/startup
+
     mkdir -p backup/networking
     mkdir -p backup/system
     mkdir -p backup/malware

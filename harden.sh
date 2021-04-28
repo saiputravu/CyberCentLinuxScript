@@ -386,28 +386,6 @@ remove_malware () {
     done
 }
 
-# -------------------- Firefox functions --------------------
-firefox_config () {
-    echo "
-    pref("general.config.filename", "mozilla.cfg");" >> /usr/lib/firefox/defaults/pref/local-settings.js
-
-    config = "
-    lockPref("browser.safebrowsing.downloads.enabled", true);
-    lockPref("dom.disable_open_during_load", true);
-    lockPref("xpinstall.whitelist.required", true); # Scored
-    lockPref("xpinstall.signatures.required", true); # Scored
-    lockPref("app.update.enabled", true);
-    lockPref("app.update.auto", true);
-    lockPref("privacy.donottrackheader.enabled", true);
-    lockPref("browser.safebrowsing.downloads.remote.block_potentially_unwanted",
-    true);
-    lockPref("browser.safebrowsing.downloads.remote.block_uncommon", true);
-    lockPref("browser.safebrowsing.malware.enabled", true); # scored
-    lockPref("browser.safebrowsing.phishing.enabled", true);
-    "
-    echo "$config" >> /usr/lib/firefox/mozilla.cfg
-}
-
 # -------------------- Service functions --------------------
 service_ssh () {
     # Unique config file each time
@@ -1397,6 +1375,23 @@ set_grub_password () {
 
 # -------------------- Misc functions -------------------- 
 
+firefox_config () {
+    echo 'pref("general.config.filename", "mozilla.cfg");' | sudo tee -a /usr/lib/firefox/defaults/pref/local-settings.js > /dev/null
+
+    local config='lockPref("browser.safebrowsing.downloads.enabled", true);\n
+    lockPref("dom.disable_open_during_load", true);\n
+    lockPref("xpinstall.whitelist.required", true);\n
+    lockPref("xpinstall.signatures.required", true);\n
+    lockPref("app.update.enabled", true);\n
+    lockPref("app.update.auto", true);\n
+    lockPref("privacy.donottrackheader.enabled", true);\n
+    lockPref("browser.safebrowsing.downloads.remote.block_potentially_unwanted", true);\n
+    lockPref("browser.safebrowsing.downloads.remote.block_uncommon", true);\n
+    lockPref("browser.safebrowsing.malware.enabled", true);\n
+    lockPref("browser.safebrowsing.phishing.enabled", true);\n'
+    echo -e $config | sed "s/^ //g" | sudo tee -a /usr/lib/firefox/mozilla.cfg > /dev/null
+}
+
 delete_media () {
     sudo find / -name '*.mp3' -type f -exec mv {} backup/misc \; 2> /dev/null
     sudo find / -name '*.mov' -type f -exec mv {} backup/misc \; 2> /dev/null
@@ -1643,6 +1638,12 @@ main_system () {
     echo "${GREEN}[*] Setting correct file permissions for sensitive files ...${RESET}"
     file_perms
 
+    echo "${GREEN}[*] Quarantining media files ... ${RESET}"
+    delete_media
+
+    echo "${GREEN}[*] Setting firefox config ... ${RESET}"
+    firefox_config
+
     local answer=""
     echo -n "${CYAN}Set grub password to" '"CyberPatriot!"' "[${GREEN}y${CYAN}|${RED}N${CYAN}] : ${RESET}"
     read -rp "" answer
@@ -1702,6 +1703,7 @@ main () {
     main_networking
     main_services
     main_system
+
 }
 main
 

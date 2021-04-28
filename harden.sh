@@ -386,6 +386,28 @@ remove_malware () {
     done
 }
 
+# -------------------- Firefox functions --------------------
+firefox_config () {
+    echo "
+    pref("general.config.filename", "mozilla.cfg");" >> /usr/lib/firefox/defaults/pref/local-settings.js
+
+    config = "
+    lockPref("browser.safebrowsing.downloads.enabled", true);
+    lockPref("dom.disable_open_during_load", true);
+    lockPref("xpinstall.whitelist.required", true); # Scored
+    lockPref("xpinstall.signatures.required", true); # Scored
+    lockPref("app.update.enabled", true);
+    lockPref("app.update.auto", true);
+    lockPref("privacy.donottrackheader.enabled", true);
+    lockPref("browser.safebrowsing.downloads.remote.block_potentially_unwanted",
+    true);
+    lockPref("browser.safebrowsing.downloads.remote.block_uncommon", true);
+    lockPref("browser.safebrowsing.malware.enabled", true); # scored
+    lockPref("browser.safebrowsing.phishing.enabled", true);
+    "
+    echo "$config" >> /usr/lib/firefox/mozilla.cfg
+}
+
 # -------------------- Service functions --------------------
 service_ssh () {
     # Unique config file each time

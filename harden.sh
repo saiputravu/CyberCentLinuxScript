@@ -766,6 +766,7 @@ service_nginx () {
     sudo service nginx restart 
 }
 
+
 service_mysql () {
     # Unique config file each time
     sudo cp $PHPCONFIG backup/services/php_ini_`date +%s`.bak
@@ -1209,69 +1210,6 @@ main_pam () {
     account_policies
 }
 
-main_services () {
-    # Reads a file called critical_services.txt
-    # Each line holds a new service to set config
-    # Services are: 
-    #   * apache2
-    #   * nginx
-    #   * php
-    #   * ssh 
-    #   * vsftpd
-    #   * pure-ftpd
-    #   * proftpd
-    #   * samba
-
-    local SERVICESCONFIGFILE="critical_services.txt"
-    
-    # Loop through file lines, get rid of clrf (written on windows so necessary, won't be useful if writing critical_services.txt on linux)
-    # Also can do :set ff=unix in vim to fix it without sed
-    for line in `cat critical_services.txt | sed 's/\r$//'`
-    do
-        case $line in 
-            apache2) 
-                echo "${GREEN}[*] Setting Apache2 configuration ... ${RESET}"
-                service_apache2
-                ;;
-            nginx) 
-                echo "${GREEN}[*] Setting Nginx configuration ... ${RESET}"
-                service_nginx
-                ;;
-            mysql) 
-                echo "${GREEN}[*] Setting MySql configuration ... ${RESET}"
-                service_mysql
-                ;;
-            php) 
-                echo "${GREEN}[*] Setting PHP configuration ... ${RESET}"
-                service_php
-                ;;
-            ssh) 
-                echo "${GREEN}[*] Setting OpenSSH configuration ... ${RESET}"
-                service_ssh
-                ;;
-            samba) 
-                echo "${GREEN}[*] Setting Samba configuration ... ${RESET}"
-                service_samba
-                ;;
-            vsftpd) 
-                echo "${GREEN}[*] Setting VsFTPd configuration ... ${RESET}"
-                service_vsftpd
-                ;;
-            pure-ftpd) 
-                echo "${GREEN}[*] Setting Pure-FTPd configuration ... ${RESET}"
-                service_pureftpd
-                ;;
-            proftpd)
-                echo "${GREEN}[*] Setting ProFTPd configuration ... ${RESET}"
-                service_proftpd
-                ;;
-            *)
-                echo "${RED}[*] ${SERVICESCONFIGFILE} has a service [${BOLD}$line${RESET}${RED}] that has not been detected properlly (skipping ...)${RESET}"
-                ;;
-        esac
-    done
-}
-
 main_networking () {
     echo "${GREEN}[*] Configuring networking with sysctl ...${RESET}"
     networking_sysctl_config
@@ -1342,7 +1280,6 @@ main () {
     main_apt
     main_users
     main_pam
-    main_services
     main_networking
     main_system
 }

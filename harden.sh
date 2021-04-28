@@ -1021,21 +1021,25 @@ anti_malware_software () {
 run_antimalware () {
     # Files necessary:
     #   NONE
-    sudo chkrootkit -q
+    chkrootkit -q
 
-    sudo rkhunter --update
-    sudo rkhunter --propupd
-    sudo rkhunter -c --enable all --disable none
+    rkhunter --update
+    rkhunter --propupd
+    rkhunter -c --enable all --disable none
 
-    sudo systemctl stop clamav-freshclam
-    sudo freshclam --stdout
-    sudo systemctl start clamav-freshclam
-    sudo clamscan -r -i --stdout --exclude-dir="^/sys"
+    systemctl stop clamav-freshclam
+    freshclam --stdout
+    systemctl start clamav-freshclam
+    clamscan -r -i --stdout --exclude-dir="^/sys"
 
+    #/usr/share/lynis/lynis update info   NEED TO FIX/HELP
+    #/usr/share/lynis/lynis audit system  >> NEED TO FIX/HELP
     sudo wget https://downloads.cisofy.com/lynis/lynis-2.7.0.tar.gz -O ~/Desktop/lynis.tar.gz
     sudo tar -xzf ~/Desktop/lynis.tar.gz --directory /usr/share
-    #/usr/share/lynis/lynis update info   NEED TO FIX/HELP
-    #/usr/share/lynis/lynis audit system  NEED TO FIX/HELP
+
+    sudo ./usr/share/lynis/lynis update info
+    sudo ./usr/share/lynis/lynis audit system > backup/malware/lynis.txt | tee -a backup/malware # SAI APPROVE THIS
+
 }
 
 apparmor () {
@@ -1585,6 +1589,7 @@ main () {
     chattr_all_config_files
 
     # Apt fast install
+    sudo apt install -y software-properties-common
     sudo add-apt-repository ppa:apt-fast/stable -y
     sudo apt-get update
     sudo DEBIAN_FRONTEND=noninteractive apt install -y apt-fast && APT=apt-fast
@@ -1598,3 +1603,4 @@ main () {
     main_system
 }
 main
+

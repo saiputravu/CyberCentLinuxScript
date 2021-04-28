@@ -814,16 +814,16 @@ anti_malware_software () {
 run_antimalware () {
     # Files necessary:
     #   NONE
-    chkrootkit -q
+    sudo chkrootkit -q
 
-    rkhunter --update
-    rkhunter --propupd
-    rkhunter -c --enable all --disable none
+    sudo rkhunter --update
+    sudo rkhunter --propupd
+    sudo rkhunter -c --enable all --disable none
 
-    systemctl stop clamav-freshclam
-    freshclam --stdout
-    systemctl start clamav-freshclam
-    clamscan -r -i --stdout --exclude-dir="^/sys"
+    sudo systemctl stop clamav-freshclam
+    sudo freshclam --stdout
+    sudo systemctl start clamav-freshclam
+    sudo clamscan -r -i --stdout --exclude-dir="^/sys"
 
     sudo wget https://downloads.cisofy.com/lynis/lynis-2.7.0.tar.gz -O ~/Desktop/lynis.tar.gz
     sudo tar -xzf ~/Desktop/lynis.tar.gz --directory /usr/share
@@ -1095,20 +1095,20 @@ set_grub_password () {
 # -------------------- Misc functions -------------------- 
 
 delete_media () {
-    find / -name '*.mp3' -type f -delete
-    find / -name '*.mov' -type f -delete
-    find / -name '*.mp4' -type f -delete
-    find / -name '*.avi' -type f -delete
-    find / -name '*.mpg' -type f -delete
-    find / -name '*.mpeg' -type f -delete
-    find / -name '*.flac' -type f -delete
-    find / -name '*.m4a' -type f -delete
-    find / -name '*.flv' -type f -delete
-    find / -name '*.ogg' -type f -delete
-    find /home -name '*.gif' -type f -delete
-    find /home -name '*.png' -type f -delete
-    find /home -name '*.jpg' -type f -delete
-    find /home -name '*.jpeg' -type f -delete 
+    sudo find / -name '*.mp3' -type f -exec mv {} backup/misc \; 2> /dev/null
+    sudo find / -name '*.mov' -type f -exec mv {} backup/misc \; 2> /dev/null
+    sudo find / -name '*.mp4' -type f -exec mv {} backup/misc \; 2> /dev/null
+    sudo find / -name '*.avi' -type f -exec mv {} backup/misc \; 2> /dev/null
+    sudo find / -name '*.mpg' -type f -exec mv {} backup/misc \; 2> /dev/null
+    sudo find / -name '*.mpeg' -type f -exec mv {} backup/misc \; 2> /dev/null
+    sudo find / -name '*.flac' -type f -exec mv {} backup/misc \; 2> /dev/null
+    sudo find / -name '*.m4a' -type f -exec mv {} backup/misc \; 2> /dev/null
+    sudo find / -name '*.flv' -type f -exec mv {} backup/misc \; 2> /dev/null
+    sudo find / -name '*.ogg' -type f -exec mv {} backup/misc \; 2> /dev/null
+    sudo find /home -name '*.gif' -type f -exec mv {} backup/misc \; 2> /dev/null
+    sudo find /home -name '*.png' -type f -exec mv {} backup/misc \; 2> /dev/null
+    sudo find /home -name '*.jpg' -type f -exec mv {} backup/misc \; 2> /dev/null
+    sudo find /home -name '*.jpeg' -type f -dexec mv {} backup/misc \; 2> /dev/null
 }
 
 chattr_all_config_files () {

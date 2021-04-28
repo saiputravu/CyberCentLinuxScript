@@ -1677,8 +1677,10 @@ main () {
     mkdir -p backup/misc
 
     # Ensure all config files can be edited
+    echo "${GREEN}[*] Chattr'ing all files ... ${RESET}"
     chattr_all_config_files
 
+    echo "${GREEN}[*] Installing apt-fast ... ${RESET}"
     # Apt fast install (different for ubuntu and debian)
     case $DISTRO in 
         Ubuntu)

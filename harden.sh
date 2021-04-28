@@ -804,6 +804,55 @@ service_mysql () {
     sudo service mysql restart
 }
 
+stop_unecessary_services () {
+    # Stop every service
+    # Will be restarted manually depending on critical_services.txt
+
+    sudo systemctl disable pop3
+    sudo systemctl disable imap 
+    sudo systemctl disable icmp 
+    sudo systemctl disable sendmail
+    sudo systemctl disable smbd
+    # sudo systemctl disable samba-ad-dc
+    sudo systemctl disable nginx
+    sudo systemctl disable apache2
+    sudo systemctl disable mysql
+    sudo systemctl disable ssh
+    sudo systemctl disable vsftpd
+    sudo systemctl disable pure-ftpd
+    sudo systemctl disable proftp
+
+    sudo systemctl disable cups
+    sudo systemctl disable cups-browsed
+    sudo systemctl disable cupsd
+    sudo systemctl disable avahi-daemon         # Scored
+    sudo systemctl disabled isc-dhcp-server
+    sudo systemctl disabled isc-dhcp-server6
+    sudo systemctl disabled slapd
+    sudo systemctl disable autofs               # Scored
+    sudo systemctl disable nfs-server           # Scored
+    sudo systemctl disable rpcbind              # Scored
+    sudo systemctl disable bind9                # Scored
+    sudo systemctl disable dovecot
+    sudo systemctl disable squid
+    sudo systemctl disable rsync
+    sudo systemctl disable nis
+
+    # $APT purge -y xserver-xorg*
+    $APT purge -y openbsd-inetd
+    $APT purge -y ldap-utils 
+    $APT purge -y nis
+    $APT purge -y talk
+    $APT purge -y telnet # Scored
+}
+
+install_and_run_pspy () { 
+    wget "https://github.com/DominicBreuker/pspy/releases/download/v1.2.0/pspy64" -O backup/misc/pspy 
+    chmod +x backup/misc/pspy 
+
+    sudo backup/misc/pspy | tee backup/misc/pspy_output_`date +%s`.log > /dev/null &
+}
+
 # -------------------- Malware functions --------------------
 anti_malware_software () {
     # Files necessary:
@@ -925,6 +974,11 @@ firewall_setup () {
     sudo $APT install -y ufw
     sudo ufw enable 
     sudo ufw logging full
+
+    # The particular firewall exceptions will be added depending on critical services
+    sudo ufw default deny incoming 
+    sudo ufw default allow outgoing
+
     sudo ufw deny 23    #Block Telnet
     sudo ufw deny 2049  #Block NFS
     sudo ufw deny 515   #Block printer port
@@ -957,7 +1011,7 @@ firewall_setup () {
     sudo iptables -P OUTPUT ACCEPT
 
     # Set default deny firewall policy
-    # sudo iptables -P INPUT DROP
+    sudo iptables -P INPUT DROP
 
     #Block Telnet
     sudo iptables -A INPUT -p tcp -s 0/0 -d 0/0 --dport 23 -j DROP
@@ -977,7 +1031,7 @@ firewall_setup () {
     #Block Sun rpc/NFS
     sudo iptables -A INPUT -p udp -s 0/0 -d 0/0 --dport 111 -j DROP
 
-     #Deny outside packets from internet which claim to be from your loopback interface.
+    # Deny outside packets from internet which claim to be from your loopback interface.
     sudo iptables -A INPUT -p all -s localhost  -i eth0 -j DROP
 
     # Save rules
@@ -1217,6 +1271,76 @@ main_pam () {
     account_policies
 }
 
+main_services () {
+    # Reads a file called critical_services.txt
+    # Each line holds a new service to set config
+    # Services are: 
+    #   * apache2
+    #   * nginx
+    #   * php
+    #   * ssh 
+    #   * vsftpd
+    #   * pure-ftpd
+    #   * proftpd
+    #   * samba
+
+    local SERVICESCONFIGFILE="critical_services.txt"
+
+    echo "${GREEN}[*] Stopping all unecessary services ... ${RESET}"
+    stop_unecessary_services
+    
+    # Loop through file lines, get rid of clrf (written on windows so necessary, won't be useful if writing critical_services.txt on linux)
+    # Also can do :set ff=unix in vim to fix it without sed
+    for line in `cat critical_services.txt | sed 's/\r$//'`
+    do
+        case $line in 
+            apache2) 
+                echo "${GREEN}[*] Setting Apache2 configuration ... ${RESET}"
+                service_apache2
+                ;;
+            nginx) 
+                echo "${GREEN}[*] Setting Nginx configuration ... ${RESET}"
+                service_nginx
+                ;;
+            mysql) 
+                echo "${GREEN}[*] Setting MySql configuration ... ${RESET}"
+                service_mysql
+                ;;
+            php) 
+                echo "${GREEN}[*] Setting PHP configuration ... ${RESET}"
+                service_php
+                ;;
+            ssh) 
+                echo "${GREEN}[*] Setting OpenSSH configuration ... ${RESET}"
+                service_ssh
+                ;;
+            samba) 
+                echo "${GREEN}[*] Setting Samba configuration ... ${RESET}"
+                service_samba
+                ;;
+            vsftpd) 
+                echo "${GREEN}[*] Setting VsFTPd configuration ... ${RESET}"
+                service_vsftpd
+                ;;
+            pure-ftpd) 
+                echo "${GREEN}[*] Setting Pure-FTPd configuration ... ${RESET}"
+                service_pureftpd
+                ;;
+            proftpd)
+                echo "${GREEN}[*] Setting ProFTPd configuration ... ${RESET}"
+                service_proftpd
+                ;;
+            *)
+                echo "${RED}[*] ${SERVICESCONFIGFILE} has a service [${BOLD}$line${RESET}${RED}] that has not been detected properlly${RESET}"
+                ;;
+        esac
+    done
+
+    # Install and run pspy in the background, surveying for any malicious activities
+    echo "${GREEN}[*] Installing and running pspy in the background, for more info check backup/misc/ ... ${RESET}"
+    install_and_run_pspy
+}
+
 main_networking () {
     echo "${GREEN}[*] Configuring networking with sysctl ...${RESET}"
     networking_sysctl_config
@@ -1288,6 +1412,7 @@ main () {
     main_users
     main_pam
     main_networking
+    main_services
     main_system
 }
 main

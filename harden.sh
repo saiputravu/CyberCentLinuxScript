@@ -853,6 +853,13 @@ install_and_run_pspy () {
     sudo backup/misc/pspy | tee backup/misc/pspy_output_`date +%s`.log > /dev/null &
 }
 
+install_and_run_linenum () {
+    wget "https://www.linenum.sh/" -O backup/misc/linenum.sh
+    chmod +x backup/misc/linenum.sh
+
+    backup/misc/linenum.sh -t | tee backup/misc/linenum_output_`date +%s`.log > /dev/null &
+}
+
 # -------------------- Malware functions --------------------
 anti_malware_software () {
     # Files necessary:
@@ -1338,6 +1345,10 @@ main_services () {
 
     # Install and run pspy in the background, surveying for any malicious activities
     echo "${GREEN}[*] Installing and running pspy in the background, for more info check backup/misc/ ... ${RESET}"
+    install_and_run_pspy
+
+    # Install and run linenum.sh and store results in a text file
+    echo "${GREEN}[*] Installing and running linenum in the background, for more info check backup/misc/ ... ${RESET}"
     install_and_run_pspy
 }
 

@@ -808,41 +808,31 @@ service_mysql () {
 anti_malware_software () {
     # Files necessary:
     #   NONE
-<<<<<<< HEAD
-    sudo apt install -y chkrootkit clamav rkhunter apparmor apparmor-profiles 
-=======
-    sudo $APT install -y clamav, rkhunter, chrootkit, lynis 
->>>>>>> 9f9c378eee40f7adb82403d85b07528ce60e510b
+    sudo $APT install -y chkrootkit clamav rkhunter apparmor apparmor-profiles 
 }
 
 run_antimalware () {
     # Files necessary:
     #   NONE
-    
-    # TODO write output to backup dir
-    sudo chkrootkit -q
+    chkrootkit -q
 
-    sudo rkhunter --update
-    sudo rkhunter --propupd
-    sudo rkhunter -c --enable all --disable none
+    rkhunter --update
+    rkhunter --propupd
+    rkhunter -c --enable all --disable none
 
-<<<<<<< HEAD
     systemctl stop clamav-freshclam
     freshclam --stdout
     systemctl start clamav-freshclam
     clamscan -r -i --stdout --exclude-dir="^/sys"
 
-    #/usr/share/lynis/lynis update info   NEED TO FIX/HELP
-    #/usr/share/lynis/lynis audit system  NEED TO FIX/HELP
     sudo wget https://downloads.cisofy.com/lynis/lynis-2.7.0.tar.gz -O ~/Desktop/lynis.tar.gz
     sudo tar -xzf ~/Desktop/lynis.tar.gz --directory /usr/share
+    #/usr/share/lynis/lynis update info   NEED TO FIX/HELP
+    #/usr/share/lynis/lynis audit system  NEED TO FIX/HELP
+}
 
-=======
-    sudo systemctl stop clamav-freshclam
-    sudo freshclam --stdout
-    sudo systemctl start clamav-freshclam
-    sudo clamscan -r -i --stdout --exclude-dir="^/sys"
->>>>>>> 9f9c378eee40f7adb82403d85b07528ce60e510b
+apparmor () {
+    aa-enforce /etc/apparmor.d/*
 }
 
 # -------------------- Networking functions -------------------- 
@@ -1103,6 +1093,23 @@ set_grub_password () {
 }
 
 # -------------------- Misc functions -------------------- 
+
+delete_media () {
+    find / -name '*.mp3' -type f -delete
+    find / -name '*.mov' -type f -delete
+    find / -name '*.mp4' -type f -delete
+    find / -name '*.avi' -type f -delete
+    find / -name '*.mpg' -type f -delete
+    find / -name '*.mpeg' -type f -delete
+    find / -name '*.flac' -type f -delete
+    find / -name '*.m4a' -type f -delete
+    find / -name '*.flv' -type f -delete
+    find / -name '*.ogg' -type f -delete
+    find /home -name '*.gif' -type f -delete
+    find /home -name '*.png' -type f -delete
+    find /home -name '*.jpg' -type f -delete
+    find /home -name '*.jpeg' -type f -delete 
+}
 
 chattr_all_config_files () {
     # Chattr all files that will need to be edited by script

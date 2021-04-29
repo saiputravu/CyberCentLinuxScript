@@ -1086,16 +1086,16 @@ anti_malware_software () {
 run_antimalware () {
     # Files necessary:
     #   NONE
-    chkrootkit -q
+    sudo chkrootkit -q
 
-    rkhunter --update
-    rkhunter --propupd
-    rkhunter -c --enable all --disable none
+    sudo rkhunter --update
+    sudo rkhunter --propupd
+    sudo rkhunter -c --enable all --disable none
 
-    systemctl stop clamav-freshclam
-    freshclam --stdout
-    systemctl start clamav-freshclam
-    clamscan -r -i --stdout --exclude-dir="^/sys"
+    sudo systemctl stop clamav-freshclam
+    sudo freshclam --stdout
+    sudo systemctl start clamav-freshclam
+    sudo clamscan -r -i --stdout --exclude-dir="^/sys"
 
     #/usr/share/lynis/lynis update info   NEED TO FIX/HELP
     #/usr/share/lynis/lynis audit system  >> NEED TO FIX/HELP
@@ -1108,7 +1108,7 @@ run_antimalware () {
 }
 
 apparmor () {
-    aa-enforce /etc/apparmor.d/*
+    sudo aa-enforce /etc/apparmor.d/*
 }
 
 # -------------------- Networking functions -------------------- 

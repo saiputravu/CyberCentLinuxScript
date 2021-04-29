@@ -92,6 +92,7 @@ delete_unauthorised_users () {
 
     for user in $INVALID
     do 
+        echo "${YELLOW}[!] Removing user: ${user}${RESET}"
         sudo userdel -r $user
     done
     rm accusers.txt
@@ -107,6 +108,7 @@ delete_unauthorised_sudoers () {
     local INVALID=$(diff -n --suppress-common-lines sudoers.txt accsudoers.txt | cut -d" " -f5-)
     for sudoer in $INVALID
     do 
+        echo "${YELLOW}[!] Removing sudoer: ${sudoer}${RESET}"
         sudo gpasswd -d $sudoer sudo
     done
 
@@ -1426,8 +1428,8 @@ main_apt () {
     echo "${GREEN}[*] Enabling auto updates ...${RESET}"
     enable_autoupdate
 
-    echo "${GREEN}[*] Uninstalling any packages breaching policies ... ${RESET}"
-    remove_malware
+    # echo "${GREEN}[*] Uninstalling any packages breaching policies ... ${RESET}"
+    # remove_malware
 
     echo "${GREEN}[*] Updating all packages (this may take a long time) ... ${RESET}"
     update

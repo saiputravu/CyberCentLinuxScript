@@ -1650,7 +1650,7 @@ main_system () {
     firefox_config
 
     local answer=""
-    echo -n "${CYAN}Set grub password to" '"CyberPatriot!"' "[${GREEN}y${CYAN}|${RED}N${CYAN}] : ${RESET}"
+    echo -n "${CYAN}Set grub password to" '"CyberPatriot1!"' "[${GREEN}y${CYAN}|${RED}N${CYAN}] : ${RESET}"
     read -rp "" answer
     case $answer in 
         y|Y)

@@ -36,6 +36,7 @@
 #               * pure-ftpd
 #               * proftpd
 #               * samba
+#               * mysql
 #
 # You will thoroughly benefit from using a terminal emulator capable of showing 
 # nice colours. 
@@ -1541,6 +1542,7 @@ main_services () {
     #   * pure-ftpd
     #   * proftpd
     #   * samba
+    #   * mysql
 
     local SERVICESCONFIGFILE="critical_services.txt"
 

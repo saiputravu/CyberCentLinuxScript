@@ -1101,12 +1101,13 @@ run_antimalware () {
 
     sudo rkhunter --update
     sudo rkhunter --propupd
-    sudo rkhunter -c --enable all --disable none
+    sudo rkhunter -c --enable all --disable none | tee backup/malware/rkhunter
 
     sudo systemctl stop clamav-freshclam
-    sudo freshclam --stdout
+    sudo freshclam --stdout | tee backup/malware/freshclam
+
     sudo systemctl start clamav-freshclam
-    sudo clamscan -r -i --stdout --exclude-dir="^/sys"
+    sudo clamscan -r -i --stdout --exclude-dir="^/sys" | tee backup/malware/clamscan
 
     #/usr/share/lynis/lynis update info   NEED TO FIX/HELP
     #/usr/share/lynis/lynis audit system  >> NEED TO FIX/HELP

@@ -479,7 +479,13 @@ service_samba () {
 
 service_vsftpd () {
     # Unique config file each time
-    sudo cp /etc/vsftpd/vsftpd.conf backup/services/vsftpd_conf_`date +%s`.bak
+    local config_file="/etc/vsftpd.conf"
+    if [[ ! -f $config_file ]]
+    then 
+        config_file="/etc/vsftpd/vsftpd.conf"
+    fi 
+
+    sudo cp $config_file backup/services/vsftpd_conf_`date +%s`.bak
 
     sudo ufw allow ftp 
     sudo ufw allow 20
@@ -487,33 +493,33 @@ service_vsftpd () {
     # vsftpd.conf
 
     # Jail users to home directory (user will need a home dir to exist)
-    echo "chroot_local_user=YES"                        | sudo tee /etc/vsftpd/vsftpd.conf > /dev/null
-    echo "chroot_list_enable=YES"                       | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null
-    echo "chroot_list_file=/etc/vsftpd.chroot_list"     | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null
-    echo "allow_writeable_chroot=YES"                   | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # Only enable if you want files to be editable
+    echo "chroot_local_user=YES"                        | sudo tee $config_file > /dev/null
+    echo "chroot_list_enable=YES"                       | sudo tee -a $config_file > /dev/null
+    echo "chroot_list_file=/etc/vsftpd.chroot_list"     | sudo tee -a $config_file > /dev/null
+    echo "allow_writeable_chroot=YES"                   | sudo tee -a $config_file > /dev/null # Only enable if you want files to be editable
 
     # Allow or deny users
-    echo "userlist_enable=YES"                  | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null
-    echo "userlist_file=/etc/vsftpd.userlist"   | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null
-    echo "userlist_deny=NO"                     | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null
+    echo "userlist_enable=YES"                  | sudo tee -a $config_file > /dev/null
+    echo "userlist_file=/etc/vsftpd.userlist"   | sudo tee -a $config_file > /dev/null
+    echo "userlist_deny=NO"                     | sudo tee -a $config_file > /dev/null
 
     # General config
-    echo "anonymous_enable=NO"          | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # disable  anonymous login
-    echo "local_enable=YES"             | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # permit local logins
-    echo "write_enable=YES"             | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # enable FTP commands which change the filesystem
-    echo "local_umask=022"              | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # value of umask for file creation for local users
-    echo "dirmessage_enable=YES"        | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # enable showing of messages when users first enter a new directory
-    echo "xferlog_enable=YES"           | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # a log file will be maintained detailing uploads and downloads
-    echo "connect_from_port_20=YES"     | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # use port 20 (ftp-data) on the server machine for PORT style connections
-    echo "xferlog_std_format=YES"       | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # keep standard log file format
-    echo "listen=NO"                    | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # prevent vsftpd from running in standalone mode
-    echo "listen_ipv6=YES"              | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # vsftpd will listen on an IPv6 socket instead of an IPv4 one
-    echo "pam_service_name=vsftpd"      | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # name of the PAM service vsftpd will use
-    echo "userlist_enable=YES"          | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # enable vsftpd to load a list of usernames
-    echo "tcp_wrappers=YES"             | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null # turn on tcp wrappers
+    echo "anonymous_enable=NO"          | sudo tee -a $config_file > /dev/null # disable  anonymous login
+    echo "local_enable=YES"             | sudo tee -a $config_file > /dev/null # permit local logins
+    echo "write_enable=YES"             | sudo tee -a $config_file > /dev/null # enable FTP commands which change the filesystem
+    echo "local_umask=022"              | sudo tee -a $config_file > /dev/null # value of umask for file creation for local users
+    echo "dirmessage_enable=YES"        | sudo tee -a $config_file > /dev/null # enable showing of messages when users first enter a new directory
+    echo "xferlog_enable=YES"           | sudo tee -a $config_file > /dev/null # a log file will be maintained detailing uploads and downloads
+    echo "connect_from_port_20=YES"     | sudo tee -a $config_file > /dev/null # use port 20 (ftp-data) on the server machine for PORT style connections
+    echo "xferlog_std_format=YES"       | sudo tee -a $config_file > /dev/null # keep standard log file format
+    echo "listen=NO"                    | sudo tee -a $config_file > /dev/null # prevent vsftpd from running in standalone mode
+    echo "listen_ipv6=YES"              | sudo tee -a $config_file > /dev/null # vsftpd will listen on an IPv6 socket instead of an IPv4 one
+    echo "pam_service_name=vsftpd"      | sudo tee -a $config_file > /dev/null # name of the PAM service vsftpd will use
+    echo "userlist_enable=YES"          | sudo tee -a $config_file > /dev/null # enable vsftpd to load a list of usernames
+    echo "tcp_wrappers=YES"             | sudo tee -a $config_file > /dev/null # turn on tcp wrappers
 
-    echo "ascii_upload_enable=NO"   | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null 
-    echo "ascii_download_enable=NO" | sudo tee -a /etc/vsftpd/vsftpd.conf > /dev/null 
+    echo "ascii_upload_enable=NO"   | sudo tee -a $config_file > /dev/null 
+    echo "ascii_download_enable=NO" | sudo tee -a $config_file > /dev/null 
 
     sudo service vsftpd restart 
 }

@@ -334,6 +334,7 @@ install_necessary_packages () {
     sudo $APT install -y aide
     sudo $APT install -y tcpd
     sudo $APT install -y libpam-cracklib
+    sudo $APT install -y tree
 }
 
 update () {

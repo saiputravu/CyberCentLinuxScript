@@ -221,7 +221,7 @@ login_policies () {
     # /etc/logins.def
     
     # Back the file up 
-    cp /etc/login.defs backup/pam/common-password
+    cp /etc/login.defs backup/pam/login.defs
 
     # Replace the arguments
     sudo sed -ie "s/PASS_MAX_DAYS.*/PASS_MAX_DAYS\\t90/" /etc/login.defs
@@ -332,6 +332,7 @@ install_necessary_packages () {
     sudo $APT install -y fail2ban
     sudo $APT install -y aide
     sudo $APT install -y tcpd
+    sudo $APT install -y libpam-cracklib
 }
 
 update () {
@@ -409,12 +410,12 @@ service_ssh () {
     echo "UsePAM yes"                   | sudo tee -a /etc/ssh/sshd_config > /dev/null
     echo "PasswordAuthentication no"    | sudo tee -a /etc/ssh/sshd_config > /dev/null
     echo "HostBasedAuthentication no"   | sudo tee -a /etc/ssh/sshd_config > /dev/null
-    echo "RhostsRSAAuthentication no"   | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    # echo "RhostsRSAAuthentication no"   | sudo tee -a /etc/ssh/sshd_config > /dev/null
     echo "PubkeyAuthentication yes"     | sudo tee -a /etc/ssh/sshd_config > /dev/null
     echo "IgnoreRhosts yes"             | sudo tee -a /etc/ssh/sshd_config > /dev/null
     echo "StrictModes yes"              | sudo tee -a /etc/ssh/sshd_config > /dev/null
 
-    echo "UsePrivilegeSeparation yes"   | sudo tee -a /etc/ssh/sshd_config > /dev/null
+    # echo "UsePrivilegeSeparation yes"   | sudo tee -a /etc/ssh/sshd_config > /dev/null
     echo "PrintLastLog no"              | sudo tee -a /etc/ssh/sshd_config > /dev/null
     echo "PermitUserEnvironment no"     | sudo tee -a /etc/ssh/sshd_config > /dev/null
     echo "SyslogFacility AUTH"          | sudo tee -a /etc/ssh/sshd_config > /dev/null
@@ -921,7 +922,7 @@ install_and_run_pspy () {
 }
 
 install_and_run_linenum () {
-    wget "https://www.linenum.sh/" -O backup/misc/linenum.sh
+    wget "https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh" -O backup/misc/linenum.sh
     chmod +x backup/misc/linenum.sh
 
     backup/misc/linenum.sh -t | tee backup/misc/linenum_output_`date +%s`.log > /dev/null &
@@ -1201,6 +1202,8 @@ firewall_setup () {
     sudo iptables -Z
 
     sudo $APT install -y ufw
+    sudo ufw status verbose > backup/networking/firewall_ufw_before.log 
+    echo "y" | sudo ufw reset
     sudo ufw enable 
     sudo ufw logging full
 
@@ -1212,7 +1215,7 @@ firewall_setup () {
     sudo ufw deny 2049  #Block NFS
     sudo ufw deny 515   #Block printer port
     sudo ufw deny 111   #Block Sun rpc/NFS
-    sudo ufw status verbose > backup/networking/firewall_ufw.log 
+    sudo ufw status verbose > backup/networking/firewall_ufw_after.log 
 
     # Iptables specific
     # Block null packets (DoS)
@@ -1395,20 +1398,20 @@ firefox_config () {
 }
 
 delete_media () {
-    sudo find / -name '*.mp3' -type f -exec mv {} backup/misc \; 2> /dev/null
-    sudo find / -name '*.mov' -type f -exec mv {} backup/misc \; 2> /dev/null
-    sudo find / -name '*.mp4' -type f -exec mv {} backup/misc \; 2> /dev/null
-    sudo find / -name '*.avi' -type f -exec mv {} backup/misc \; 2> /dev/null
-    sudo find / -name '*.mpg' -type f -exec mv {} backup/misc \; 2> /dev/null
-    sudo find / -name '*.mpeg' -type f -exec mv {} backup/misc \; 2> /dev/null
-    sudo find / -name '*.flac' -type f -exec mv {} backup/misc \; 2> /dev/null
-    sudo find / -name '*.m4a' -type f -exec mv {} backup/misc \; 2> /dev/null
-    sudo find / -name '*.flv' -type f -exec mv {} backup/misc \; 2> /dev/null
-    sudo find / -name '*.ogg' -type f -exec mv {} backup/misc \; 2> /dev/null
-    sudo find /home -name '*.gif' -type f -exec mv {} backup/misc \; 2> /dev/null
-    sudo find /home -name '*.png' -type f -exec mv {} backup/misc \; 2> /dev/null
-    sudo find /home -name '*.jpg' -type f -exec mv {} backup/misc \; 2> /dev/null
-    sudo find /home -name '*.jpeg' -type f -dexec mv {} backup/misc \; 2> /dev/null
+    sudo find / -name '*.mp3' -type f -exec mv {} backup/misc/media \; 2> /dev/null
+    sudo find / -name '*.mov' -type f -exec mv {} backup/misc/media \; 2> /dev/null
+    sudo find / -name '*.mp4' -type f -exec mv {} backup/misc/media \; 2> /dev/null
+    sudo find / -name '*.avi' -type f -exec mv {} backup/misc/media \; 2> /dev/null
+    sudo find / -name '*.mpg' -type f -exec mv {} backup/misc/media \; 2> /dev/null
+    sudo find / -name '*.mpeg' -type f -exec mv {} backup/misc/media \; 2> /dev/null
+    sudo find / -name '*.flac' -type f -exec mv {} backup/misc/media \; 2> /dev/null
+    sudo find / -name '*.m4a' -type f -exec mv {} backup/misc/media \; 2> /dev/null
+    sudo find / -name '*.flv' -type f -exec mv {} backup/misc/media \; 2> /dev/null
+    sudo find / -name '*.ogg' -type f -exec mv {} backup/misc/media \; 2> /dev/null
+    sudo find /home -name '*.gif' -type f -exec mv {} backup/misc/media \; 2> /dev/null
+    sudo find /home -name '*.png' -type f -exec mv {} backup/misc/media \; 2> /dev/null
+    sudo find /home -name '*.jpg' -type f -exec mv {} backup/misc/media \; 2> /dev/null
+    sudo find /home -name '*.jpeg' -type f -exec mv {} backup/misc/media \; 2> /dev/null
 }
 
 chattr_all_config_files () {
@@ -1617,17 +1620,8 @@ main_networking () {
     echo "${GREEN}[*] Installing and enabling UFW...${RESET}"
     firewall_setup
 
-    local answer=""
-    echo -n "${CYAN}See enumeration of local ports [${GREEN}y${CYAN}|${RED}N${CYAN}] : ${RESET}"
-    read -rp "" answer
-    case $answer in 
-        y|Y)
-            echo 
-            monitor_ports 
-            ;;
-        n|N)
-            ;; # Do nothing
-    esac
+    echo "${GREEN}[*] Scanning local ports ...${RESET}"
+    monitor_ports 
 }
 
 main_system () {
@@ -1687,7 +1681,9 @@ main () {
     mkdir -p backup/networking
     mkdir -p backup/system
     mkdir -p backup/malware
+
     mkdir -p backup/misc
+    mkdir -p backup/misc/media
 
     # Ensure all config files can be edited
     echo "${GREEN}[*] Chattr'ing all files ... ${RESET}"

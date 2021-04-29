@@ -123,8 +123,8 @@ add_new_users () {
     echo -n "${CLEARSCREEN}"
     echo "${RED}${BOLD}Type 'exit' to stop.${RESET}"
     while read -r -p "Username to create: " && [[ $REPLY != exit ]]; do 
-        echo "${GREEN}[+] Added new user '${REPLY}'${RESET}"
-        sudo useradd $REPLY
+        echo "${GREEN}[+] Added new user and creating new home directory '${REPLY}'${RESET}"
+        sudo useradd -m $REPLY
     done
 }
 

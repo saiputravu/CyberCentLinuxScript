@@ -1120,6 +1120,7 @@ run_antimalware () {
 }
 
 apparmor () {
+    sudo $APT install -y apparmor-utils
     sudo aa-enforce /etc/apparmor.d/*
 }
 

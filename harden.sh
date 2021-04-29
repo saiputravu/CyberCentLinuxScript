@@ -92,6 +92,7 @@ delete_unauthorised_users () {
 
     for user in $INVALID
     do 
+        echo "${YELLOW}[!] Removing user: ${user}${RESET}"
         sudo userdel -r $user
     done
     rm accusers.txt
@@ -107,6 +108,7 @@ delete_unauthorised_sudoers () {
     local INVALID=$(diff -n --suppress-common-lines sudoers.txt accsudoers.txt | cut -d" " -f5-)
     for sudoer in $INVALID
     do 
+        echo "${YELLOW}[!] Removing sudoer: ${sudoer}${RESET}"
         sudo gpasswd -d $sudoer sudo
     done
 
@@ -1102,8 +1104,8 @@ run_antimalware () {
     sudo wget https://downloads.cisofy.com/lynis/lynis-2.7.0.tar.gz -O ~/Desktop/lynis.tar.gz
     sudo tar -xzf ~/Desktop/lynis.tar.gz --directory /usr/share
 
-    sudo ./usr/share/lynis/lynis update info
-    sudo ./usr/share/lynis/lynis audit system > backup/malware/lynis.txt | tee -a backup/malware # SAI APPROVE THIS
+    #sudo ./usr/share/lynis/lynis update info
+    #sudo ./usr/share/lynis/lynis audit system > backup/malware/lynis.txt | tee -a backup/malware # SAI APPROVE THIS
 
 }
 
@@ -1426,8 +1428,8 @@ main_apt () {
     echo "${GREEN}[*] Enabling auto updates ...${RESET}"
     enable_autoupdate
 
-    echo "${GREEN}[*] Uninstalling any packages breaching policies ... ${RESET}"
-    remove_malware
+    # echo "${GREEN}[*] Uninstalling any packages breaching policies ... ${RESET}"
+    # remove_malware
 
     echo "${GREEN}[*] Updating all packages (this may take a long time) ... ${RESET}"
     update
@@ -1657,6 +1659,17 @@ main_system () {
     esac
 }
 
+main_malware () {
+    echo "${GREEN}[*] Installing anti-malware software ...${RESET}"
+    anti_malware_software
+
+    echo "${GREEN}[*] Running anti-malware software ...${RESET}"
+    run_antimalware
+
+    echo "${GREEN}[*] App armor ...${RESET}"
+    apparmor
+}
+
 # Function to run everything
 main () {
     echo -n "${CLEARSCREEN}"
@@ -1705,6 +1718,7 @@ main () {
     main_networking
     main_services
     main_system
+    main_malware
 
 }
 main
